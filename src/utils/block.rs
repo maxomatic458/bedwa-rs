@@ -1,4 +1,3 @@
-
 // pub trait BlockExt {
 //     /// If the block is collidable
 //     fn is_collidable(&self) -> bool;

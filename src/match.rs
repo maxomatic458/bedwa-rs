@@ -10,7 +10,7 @@ use valence::{
     client::{Client, Username},
     entity::Position,
     prelude::{Inventory, Resource},
-    GameMode, ItemKind,
+    GameMode, ItemKind, ItemStack,
 };
 
 use crate::{
@@ -85,7 +85,9 @@ fn start_match(
 
     let mut match_state = MatchState::new();
     for team in &bedwars_config.teams {
-        match_state.teams.insert(team.0.to_string(), TeamStats::default());
+        match_state
+            .teams
+            .insert(team.0.to_string(), TeamStats::default());
     }
 
     for (entity, mut pos, mut inventory, client, mut game_mode, username, team) in
@@ -93,6 +95,7 @@ fn start_match(
     {
         *game_mode = GameMode::Survival;
         inventory.clear();
+        inventory.set_slot(9, ItemStack::new(ItemKind::Dirt, 64, None));
         inventory.readonly = false;
 
         let team_spawn = bedwars_config.spawns.get(&team.0).unwrap();
@@ -104,10 +107,7 @@ fn start_match(
             .player_stats
             .insert(username.0.clone(), PlayerStats::default());
 
-        let team = match_state
-            .teams
-            .get_mut(&team.0)
-            .unwrap();
+        let team = match_state.teams.get_mut(&team.0).unwrap();
 
         team.players.push(username.to_string());
     }

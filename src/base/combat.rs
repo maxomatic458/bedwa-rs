@@ -3,12 +3,11 @@ use valence::{
     entity::{living::Health, EntityId, EntityStatuses},
     inventory::HeldItem,
     prelude::*,
-    protocol::{packets::play::EntityDamageS2c, WritePacket},
+    protocol::{packets::play::EntityDamageS2c, sound::SoundCategory, Sound, WritePacket},
 };
 
-use crate::commands;
 
-use super::on_death::IsDead;
+use super::death::IsDead;
 
 const ATTACK_COOLDOWN_TICKS: i64 = 0;
 
@@ -41,16 +40,13 @@ struct CombatQuery {
     inventory: &'static Inventory,
     held_item: &'static HeldItem,
     entity: Entity,
-
 }
 
 fn combat_system(
     mut commands: Commands,
-    // mut all_clients: Query<&mut Client>,
-    mut clients: Query<CombatQuery>,
+    mut clients: Query<CombatQuery, Without<IsDead>>,
     mut sprinting: EventReader<SprintEvent>,
     mut interact_entity_events: EventReader<InteractEntityEvent>,
-    
 ) {
     for &InteractEntityEvent {
         client: attacker,
@@ -58,7 +54,7 @@ fn combat_system(
         ..
     } in interact_entity_events.read()
     {
-        let Ok([attacker, mut victim]) = clients.get_many_mut([attacker, victim]) else {
+        let Ok([mut attacker, mut victim]) = clients.get_many_mut([attacker, victim]) else {
             continue;
         };
 
@@ -88,85 +84,32 @@ fn combat_system(
         victim.client.trigger_status(EntityStatus::PlayAttackSound);
         victim.statuses.trigger(EntityStatus::PlayAttackSound);
 
-        // attacker.client.play_sound(
-        //     Sound::EntityPlayerHurt,
-        //     SoundCategory::Hostile,
-        //     attacker.pos.0,
-        //     1.0,
-        //     1.0,
-        // );
+        attacker.client.play_sound(
+            Sound::EntityPlayerHurt,
+            SoundCategory::Hostile,
+            attacker.pos.0,
+            1.0,
+            1.0,
+        );
 
-        // victim.client.play_sound(
-        //     Sound::EntityPlayerHurt,
-        //     SoundCategory::Hostile,
-        //     victim.pos.0,
-        //     1.0,
-        //     1.0,
-        // );
+        victim.client.play_sound(
+            Sound::EntityPlayerHurt,
+            SoundCategory::Hostile,
+            victim.pos.0,
+            1.0,
+            1.0,
+        );
 
         let victim_id = victim.entity_id.get().into();
         let attacker_id = attacker.entity_id.get().into();
         let attacker_pos = attacker.pos.0.into();
 
-        
-
-        // let (_, attacker_pos, attacker_id, mut attacker_health, mut attacker_client, mut attacker_entity_status, mut attacker_anims) = attacker;
-        // let (_, victim_pos, victim_id, mut victim_health, mut victim_client, mut victim_entity_status, mut victim_anims) = victim;
-
-        // let attacker_pos = attacker_pos.0;
-        // let victim_pos = victim_pos.0;
-
-        // let dir = (victim_pos - attacker_pos).normalize();
-
-        // victim_client.play_sound(
-        //     Sound::EntityPlayerHurt,
-        //     SoundCategory::Hostile,
-        //     victim_pos,
-        //     1.0,
-        //     1.0,
-        // );
-
-        // client.play_hurt_anim
-
-        // attacker_client.
-
-        // attacker_client.write_packet(&Animation);
-
-        // victim_health.0 -= 1.0;
-
-        // attacker_client.write_packet(&valence::protocol::play:);
-
-        // victim_anims.set(EntityAnimation::EnchantedHit, true);
-
-        // victim_client.trigger_status(EntityStatus::);
-
-        // attacker_client.trigger_status(EntityStatus::PlayAttackSound);
-        // attacker_entity_status.trigger(EntityStatus::PlayAttackSound);
-
-        // attacker_client.
-
-        // let knockback = if has_bonus_knockback {
-        //     SPRINT_KNOCKBACK_MULTIPLIER * KNOCKBACK
-        // } else {
-        //     KNOCKBACK
-        // };
-
-        // let knockback = dir * knockback;
-
-        // victim_client.set_velocity(knockback.as_vec3());
-
-        // attacker_client.write_packet(&EntityDamageS2c {
-        //     entity_id: victim_id.get().into(),
-        //     source_type_id: 1.into(),
-        //     source_cause_id: attacker_id.get().into(),
-        //     source_direct_id: attacker_id.get().into(),
-        //     source_pos: attacker_pos.into(),
-        // });
-        victim.health.0 = (victim.health.0-1.0).max(0.0);
+        victim.health.0 -= 1.0;
         if victim.health.0 <= 0.0 {
             commands.entity(victim.entity).insert(IsDead);
-
+            victim.health.0 = 1.0;
         }
+
         for mut player in clients.iter_mut() {
             // the red hit animation entity thing
             player.client.write_packet(&EntityDamageS2c {

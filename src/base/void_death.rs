@@ -1,39 +1,36 @@
-use bevy_ecs::{entity::Entity, query::{With, Without}, system::{Commands, Query, Res}};
-use color_eyre::owo_colors::colors::Yellow;
-use valence::{app::{Plugin, Update}, entity::{display::Width, Position}, prelude::Inventory, protocol::packets::play::player_abilities_s2c, GameMode};
+use bevy_ecs::{
+    entity::Entity,
+    query::{With, Without},
+    system::{Commands, Query, Res},
+};
+use valence::{
+    app::{Plugin, Update},
+    entity::Position,
+};
 
-use crate::{bedwars_config, utils::inventory, Team};
+use crate::{bedwars_config, Team};
 
-use super::on_death::IsDead;
+use super::death::IsDead;
+
+// TODO: here arena bounds?
 
 pub struct VoidDeathPlugin;
 
 impl Plugin for VoidDeathPlugin {
     fn build(&self, app: &mut valence::prelude::App) {
-        app.add_systems(Update, voiddeath);
+        app.add_systems(Update, void_death);
     }
 }
 
-fn voiddeath(
+fn void_death(
     mut commands: Commands,
-    mut clients: Query<
-   (
-    Entity,
-    &mut Position,
-    &mut GameMode,
-    &mut Inventory,
-   ),
-   (With<Team>, Without<IsDead>)
-   >, 
-   bedwars_config: Res<bedwars_config::BedwarsConfig>,
-){ 
-    for (player, mut position, mut game_mode, mut inventory) in &mut clients {
+    mut clients: Query<(Entity, &Position), (With<Team>, Without<IsDead>)>,
+    bedwars_config: Res<bedwars_config::BedwarsConfig>,
+) {
+    for (player, position) in &mut clients {
         let void = &bedwars_config.bounds.0.y.min(bedwars_config.bounds.1.y);
         if position.y < *void as f64 {
-           commands.entity(player).insert(IsDead);
-        } 
-
-        //*game_mode = GameMode::Spectator;
+            commands.entity(player).insert(IsDead);
+        }
     }
-
 }
