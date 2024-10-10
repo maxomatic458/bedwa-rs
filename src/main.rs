@@ -1,6 +1,5 @@
 use base::{
-    break_blocks::BlockBreakPlugin, build::BuildPlugin, combat::CombatPlugin,
-    drop_items::ItemDropPlugin, item::ItemEntityPlugin, item_pickup::ItemPickupPlugin,
+    break_blocks::BlockBreakPlugin, build::BuildPlugin, combat::CombatPlugin, drop_items::ItemDropPlugin, item::ItemEntityPlugin, item_pickup::ItemPickupPlugin, on_death::OnDeathPlugin, void_death::VoidDeathPlugin
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -55,6 +54,8 @@ fn main() {
 
     App::new()
         .add_plugins(StatesPlugin)
+        .add_plugins(VoidDeathPlugin)
+        .add_plugins(OnDeathPlugin)
         .add_plugins(TimePlugin)
         .init_state::<GameState>()
         .add_plugins(DefaultPlugins)

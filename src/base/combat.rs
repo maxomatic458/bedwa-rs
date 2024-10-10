@@ -6,6 +6,10 @@ use valence::{
     protocol::{packets::play::EntityDamageS2c, WritePacket},
 };
 
+use crate::commands;
+
+use super::on_death::IsDead;
+
 const ATTACK_COOLDOWN_TICKS: i64 = 0;
 
 const KNOCKBACK_DEFAULT_XZ: f32 = 8.0;
@@ -36,13 +40,17 @@ struct CombatQuery {
     statuses: &'static mut EntityStatuses,
     inventory: &'static Inventory,
     held_item: &'static HeldItem,
+    entity: Entity,
+
 }
 
 fn combat_system(
+    mut commands: Commands,
     // mut all_clients: Query<&mut Client>,
     mut clients: Query<CombatQuery>,
     mut sprinting: EventReader<SprintEvent>,
     mut interact_entity_events: EventReader<InteractEntityEvent>,
+    
 ) {
     for &InteractEntityEvent {
         client: attacker,
@@ -100,16 +108,7 @@ fn combat_system(
         let attacker_id = attacker.entity_id.get().into();
         let attacker_pos = attacker.pos.0.into();
 
-        for mut player in clients.iter_mut() {
-            // the red hit animation entity thing
-            player.client.write_packet(&EntityDamageS2c {
-                entity_id: victim_id,
-                source_type_id: 1.into(), // idk what 1 is, probably physical damage
-                source_cause_id: attacker_id,
-                source_direct_id: attacker_id,
-                source_pos: attacker_pos,
-            });
-        }
+        
 
         // let (_, attacker_pos, attacker_id, mut attacker_health, mut attacker_client, mut attacker_entity_status, mut attacker_anims) = attacker;
         // let (_, victim_pos, victim_id, mut victim_health, mut victim_client, mut victim_entity_status, mut victim_anims) = victim;
@@ -163,5 +162,20 @@ fn combat_system(
         //     source_direct_id: attacker_id.get().into(),
         //     source_pos: attacker_pos.into(),
         // });
+        victim.health.0 = (victim.health.0-1.0).max(0.0);
+        if victim.health.0 <= 0.0 {
+            commands.entity(victim.entity).insert(IsDead);
+
+        }
+        for mut player in clients.iter_mut() {
+            // the red hit animation entity thing
+            player.client.write_packet(&EntityDamageS2c {
+                entity_id: victim_id,
+                source_type_id: 1.into(), // idk what 1 is, probably physical damage
+                source_cause_id: attacker_id,
+                source_direct_id: attacker_id,
+                source_pos: attacker_pos,
+            });
+        }
     }
 }

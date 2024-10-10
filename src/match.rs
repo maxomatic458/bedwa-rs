@@ -42,19 +42,19 @@ impl MatchState {
 }
 
 #[derive(Debug, Clone, Default)]
-struct PlayerStats {
-    deaths: u16,
-    kills: u16,
-    beds_destroyed: u16,
-    resources_collected: HashMap<ItemKind, u64>,
-    resources_spent: HashMap<ItemKind, u64>,
+pub struct PlayerStats {
+    pub deaths: u16,
+    pub kills: u16,
+    pub beds_destroyed: u16,
+    pub resources_collected: HashMap<ItemKind, u64>,
+    pub resources_spent: HashMap<ItemKind, u64>,
 }
 
 #[derive(Debug, Clone, Default)]
-struct TeamStats {
-    players: Vec<String>,
-    players_alive: Vec<String>,
-    bed_destroyed: bool,
+pub struct TeamStats {
+    pub players: Vec<String>,
+    pub players_alive: Vec<String>,
+    pub bed_destroyed: bool,
 }
 
 pub struct MatchPlugin;
@@ -84,6 +84,9 @@ fn start_match(
     tracing::info!("Starting match");
 
     let mut match_state = MatchState::new();
+    for team in &bedwars_config.teams {
+        match_state.teams.insert(team.0.to_string(), TeamStats::default());
+    }
 
     for (entity, mut pos, mut inventory, client, mut game_mode, username, team) in
         players.iter_mut()
@@ -100,6 +103,13 @@ fn start_match(
         match_state
             .player_stats
             .insert(username.0.clone(), PlayerStats::default());
+
+        let team = match_state
+            .teams
+            .get_mut(&team.0)
+            .unwrap();
+
+        team.players.push(username.to_string());
     }
 
     commands.insert_resource(match_state);
