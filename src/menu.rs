@@ -30,7 +30,7 @@ pub struct ItemMenu {
 
 impl ItemMenu {
     pub fn new(mut menu: Inventory) -> Self {
-        menu.readonly = false;
+        menu.readonly = true;
         Self {
             menu,
             inventory_instance: None,

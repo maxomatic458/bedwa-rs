@@ -50,8 +50,7 @@ impl Plugin for LobbyPlugin {
             (
                 init_lobby_player,
                 lobby_right_click,
-                // on_team_select,
-                // on_team_change,
+                on_team_select,
                 set_action_bar,
             ),
         )
@@ -84,7 +83,7 @@ fn init_lobby_player(
         *game_mode = GameMode::Survival;
         *health = Health(20.0);
 
-        inventory.readonly = false;
+        inventory.readonly = true;
 
         let team_selector_nbt = Compound::new();
 
@@ -192,46 +191,6 @@ fn on_team_select(
         }
     }
 }
-
-// fn on_team_change(
-//     mut commands: Commands,
-//     mut players: Query<
-//         (
-//             Entity,
-//             &Position,
-//             &mut Inventory,
-//             &mut Client,
-//             &Team,
-//             &Username,
-//         ),
-//         Changed<Team>,
-//     >,
-//     bedwars_config: Res<BedwarsConfig>,
-//     mut lobby_state: ResMut<LobbyPlayerState>,
-//     mut state: ResMut<NextState<GameState>>,
-// ) {
-//     for (player, pos, mut inventory, mut client, team, username) in players.iter_mut() {
-//         let team_color = bedwars_config.teams.get(&team.0).unwrap();
-//         let team_block = team_color.wool_block();
-//         let item_stack = ItemStack::new(team_block, 1, None);
-//         inventory.set_slot(40, item_stack);
-
-//         let team_color = bedwars_config.teams.get(&team.0).unwrap();
-//         client.set_action_bar(&format!("{} Team: {}", team_color.text_color(), team.0));
-
-//         lobby_state
-//             .players
-//             .insert(username.0.clone(), team.0.clone());
-//         lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
-
-//         tracing::info!("Player {} selected team {}", username.0, team.0);
-
-//         if lobby_state.without_team == 0 {
-//             tracing::info!("setting state to match");
-//             state.set(GameState::Match);
-//         }
-//     }
-// }
 
 #[derive(Debug, Resource)]
 struct LastUpdatedActionBar(pub Instant);
