@@ -3,8 +3,8 @@
         "Blocks": [
             {
 
-            "item_id": "stone",
-            "stack_size": 1,
+            "item": "stone",
+            "count": 1,
             "nbt": {
                 "display":
                     {
