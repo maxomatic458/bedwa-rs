@@ -97,33 +97,33 @@ impl BedwarsWIPConfig {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
-pub struct ShopItem {
-    item_id: String,
-    stack_size: i8,
-    nbt: Option<Compound>,
-}
+// #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+// pub struct ShopItem {
+//     item_id: String,
+//     stack_size: i8,
+//     nbt: Option<Compound>,
+// }
 
-impl ShopItem {
-    pub fn to_item_stack(&self) -> ItemStack {
-        ItemStack::new(
-            ItemKind::from_str(&self.item_id).unwrap(),
-            self.stack_size,
-            self.nbt.clone(),
-        )
-    }
-}
+// impl ShopItem {
+//     pub fn to_item_stack(&self) -> ItemStack {
+//         ItemStack::new(
+//             ItemKind::from_str(&self.item_id).unwrap(),
+//             self.stack_size,
+//             self.nbt.clone(),
+//         )
+//     }
+// }
 
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-pub struct ShopPrice {
-    item_id: String,
-    stack_size: i8,
-}
+// #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+// pub struct ShopPrice {
+//     item_id: String,
+//     stack_size: i8,
+// }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resource)]
 pub struct ShopConfig {
     /// Category -> (item being sold, price)
-    pub shop_items: OrderMap<String, (ShopItem, Vec<(ShopItem, ShopPrice)>)>,
+    pub shop_items: OrderMap<String, (ItemStack, Vec<(ItemStack, ItemStack)>)>,
 }
 
 pub fn load_config() -> color_eyre::Result<BedwarsConfig> {

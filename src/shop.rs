@@ -83,9 +83,7 @@ fn menu_from_shop_config(shop_config: &ShopConfig) -> ItemMenu {
     let mut shop_menu = Inventory::new(InventoryKind::Generic9x5);
     for (idx, (category_name, (category_item, items))) in shop_config.shop_items.iter().enumerate()
     {
-        let category_item_stack = category_item.to_item_stack();
-
-        shop_menu.set_slot(idx as u16, category_item_stack);
+        shop_menu.set_slot(idx as u16, category_item.clone());
     }
 
     ItemMenu::new(shop_menu)
