@@ -99,5 +99,6 @@ fn place_blocks(
         player_placed_blocks.0.insert(real_pos, state);
 
         layer.set_block(real_pos, state);
+        tracing::error!("placed at: {}", real_pos);
     }
 }

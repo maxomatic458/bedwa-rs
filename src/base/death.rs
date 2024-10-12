@@ -31,6 +31,7 @@ impl Plugin for DeathPlugin {
             (
                 on_death.run_if(in_state(GameState::Match)),
                 tick_respawn_timer,
+                on_take_damage.run_if(in_state(GameState::Match)),
             ),
         )
         .observe(player_respawn);
@@ -81,16 +82,27 @@ fn player_respawn(
 
 fn on_death(
     mut commands: Commands,
-    mut clients: Query<(Entity, &mut Inventory, &mut GameMode, &Team), Added<IsDead>>,
+    mut clients: Query<(Entity, &mut Inventory, &mut GameMode, &Team, &mut Health), Added<IsDead>>,
     match_state: Res<MatchState>,
 ) {
-    for (player, mut inventory, mut game_mode, team) in &mut clients {
+    for (player, mut inventory, mut game_mode, team, mut health) in &mut clients {
         let bed_destroyed = match_state.teams.get(&team.0).unwrap().bed_destroyed;
         *game_mode = GameMode::Spectator;
         inventory.clear();
+        health.0 = 20.0;
+
         if !bed_destroyed {
             let player_respawn_timer = RespawnTimer(Timer::from_seconds(5.0, TimerMode::Once));
             commands.entity(player).insert(player_respawn_timer);
+        }
+    }
+}
+
+fn on_take_damage(mut commands: Commands, mut clients: Query<(Entity, &mut Health)>) {
+    for (player_ent, mut health) in &mut clients {
+        if health.0 <= 0.0 {
+            health.0 = 20.0;
+            commands.entity(player_ent).insert(IsDead);
         }
     }
 }

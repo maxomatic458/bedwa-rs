@@ -4,7 +4,6 @@ use valence::{
     prelude::*,
 };
 
-
 use super::drop_items::DroppedItemsPickupTimer;
 
 const ITEM_GRAVITY_MPSS: f32 = 16.0;

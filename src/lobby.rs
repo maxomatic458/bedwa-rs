@@ -21,7 +21,6 @@ use valence::{
 };
 
 use crate::{
-    base::combat::CombatState,
     bedwars_config::{self, BedwarsConfig},
     menu::{ItemMenu, MenuItemSelect},
     GameState, LobbyPlayer, Team,
@@ -63,7 +62,7 @@ impl Plugin for LobbyPlugin {
 }
 
 fn init_lobby_player(
-    mut commands: Commands,
+    commands: Commands,
     mut clients: Query<
         (
             Entity,
@@ -99,7 +98,7 @@ fn init_lobby_player(
         let stack_of_stone = ItemStack::new(ItemKind::Dirt, 64, None);
         inventory.set_slot(41, stack_of_stone);
 
-        commands.entity(player).insert(CombatState);
+        // commands.entity(player).insert(CombatState::default());
 
         lobby_state.without_team += 1;
     }

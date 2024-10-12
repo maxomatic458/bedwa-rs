@@ -1,7 +1,7 @@
 use base::{
     break_blocks::BlockBreakPlugin, build::BuildPlugin, combat::CombatPlugin, death::DeathPlugin,
-    drop_items::ItemDropPlugin, item::ItemEntityPlugin, item_pickup::ItemPickupPlugin,
-    void_death::VoidDeathPlugin,
+    drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin, item::ItemEntityPlugin,
+    item_pickup::ItemPickupPlugin, void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -59,6 +59,7 @@ fn main() {
         .add_plugins(VoidDeathPlugin)
         .add_plugins(DeathPlugin)
         .add_plugins(TimePlugin)
+        .add_plugins(FallDamagePlugin)
         .init_state::<GameState>()
         .add_plugins(DefaultPlugins)
         .add_plugins(LobbyPlugin)

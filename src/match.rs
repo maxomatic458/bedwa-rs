@@ -14,7 +14,9 @@ use valence::{
 };
 
 use crate::{
-    base::combat::CombatState, bedwars_config::BedwarsConfig, utils::inventory::InventoryExt,
+    base::{combat::CombatState, fall_damage::FallingState},
+    bedwars_config::BedwarsConfig,
+    utils::inventory::InventoryExt,
     GameState, Team,
 };
 
@@ -101,7 +103,10 @@ fn start_match(
         let team_spawn = bedwars_config.spawns.get(&team.0).unwrap();
         pos.set(team_spawn.clone());
 
-        commands.entity(entity).insert(CombatState);
+        commands
+            .entity(entity)
+            .insert(CombatState::default())
+            .insert(FallingState::default());
 
         match_state
             .player_stats

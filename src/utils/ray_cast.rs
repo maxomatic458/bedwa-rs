@@ -40,7 +40,7 @@ pub fn thick_world_raycast(
 }
 
 /// Returns a list of all the blocks that are inside (or intersect) the given AABB
-fn aabb_full_block_intersections(aabb: &Aabb) -> Vec<BlockPos> {
+pub fn aabb_full_block_intersections(aabb: &Aabb) -> Vec<BlockPos> {
     let mut blocks = Vec::new();
 
     let min = aabb.min().floor();

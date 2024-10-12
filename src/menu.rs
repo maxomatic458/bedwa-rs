@@ -1,8 +1,5 @@
 use bevy_ecs::system::Commands;
-use valence::{
-    inventory::ClickSlotEvent,
-    prelude::*,
-};
+use valence::{inventory::ClickSlotEvent, prelude::*};
 // use valence_spatial::bvh::Bvh;
 
 pub struct ItemMenuPlugin;
