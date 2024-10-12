@@ -1,4 +1,3 @@
-
 use bevy_ecs::query::Added;
 use bevy_state::prelude::in_state;
 use bevy_time::{Time, Timer, TimerMode};
@@ -6,10 +5,8 @@ use valence::prelude::Inventory;
 use valence::{entity::living::Health, prelude::*};
 
 use crate::{
-    bedwars_config::{BedwarsConfig},
-    r#match::MatchState,
-    utils::inventory::{InventoryExt},
-    GameState, Team,
+    bedwars_config::BedwarsConfig, r#match::MatchState, utils::inventory::InventoryExt, GameState,
+    Team,
 };
 
 const PLAYER_RESPAWN_TIMER: f32 = 5.0;

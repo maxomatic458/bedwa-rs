@@ -7,7 +7,7 @@ use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
 use commands::bedwars_admin::{handle_bedwars_admin_command, BedwarsAdminCommand};
 use lobby::LobbyPlugin;
-use menu::{ItemMenuPlugin, MenuItemSelect};
+use menu::ItemMenuPlugin;
 use r#match::MatchPlugin;
 use resource_spawners::ResourceSpawnerPlugin;
 use shop::ShopPlugin;
@@ -83,7 +83,6 @@ fn main() {
             ),
         )
         .add_command::<BedwarsAdminCommand>()
-        .add_event::<MenuItemSelect>()
         .insert_resource(LastTickTime::default())
         .run();
 }
@@ -132,6 +131,7 @@ fn setup(
     commands.insert_resource(shop_config);
 }
 
+#[allow(clippy::type_complexity)]
 fn init_clients(
     mut commands: Commands,
     mut clients: Query<

@@ -22,6 +22,7 @@ impl Plugin for VoidDeathPlugin {
     }
 }
 
+#[allow(clippy::type_complexity)]
 fn void_death(
     mut commands: Commands,
     mut clients: Query<(Entity, &Position), (With<Team>, Without<IsDead>)>,

@@ -6,7 +6,6 @@ use valence::{
     protocol::{packets::play::EntityDamageS2c, sound::SoundCategory, Sound, WritePacket},
 };
 
-
 use super::death::IsDead;
 
 const ATTACK_COOLDOWN_TICKS: i64 = 0;

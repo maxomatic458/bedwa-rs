@@ -2190,7 +2190,7 @@ dependencies = [
 [[package]]
 name = "valence"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2221,7 +2221,7 @@ dependencies = [
 [[package]]
 name = "valence_advancement"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2234,7 +2234,7 @@ dependencies = [
 [[package]]
 name = "valence_anvil"
 version = "0.1.0"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2252,7 +2252,7 @@ dependencies = [
 [[package]]
 name = "valence_boss_bar"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2265,7 +2265,7 @@ dependencies = [
 [[package]]
 name = "valence_build_utils"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -2275,7 +2275,7 @@ dependencies = [
 [[package]]
 name = "valence_command"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2293,7 +2293,7 @@ dependencies = [
 [[package]]
 name = "valence_command_macros"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2303,7 +2303,7 @@ dependencies = [
 [[package]]
 name = "valence_entity"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2332,7 +2332,7 @@ dependencies = [
 [[package]]
 name = "valence_generated"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "heck",
@@ -2349,7 +2349,7 @@ dependencies = [
 [[package]]
 name = "valence_ident"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "serde",
  "thiserror",
@@ -2359,7 +2359,7 @@ dependencies = [
 [[package]]
 name = "valence_ident_macros"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2369,7 +2369,7 @@ dependencies = [
 [[package]]
 name = "valence_inventory"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2381,7 +2381,7 @@ dependencies = [
 [[package]]
 name = "valence_lang"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "heck",
@@ -2395,7 +2395,7 @@ dependencies = [
 [[package]]
 name = "valence_math"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "glam",
 ]
@@ -2403,7 +2403,7 @@ dependencies = [
 [[package]]
 name = "valence_nbt"
 version = "0.8.0"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "byteorder",
  "cesu8",
@@ -2416,7 +2416,7 @@ dependencies = [
 [[package]]
 name = "valence_network"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2447,7 +2447,7 @@ dependencies = [
 [[package]]
 name = "valence_player_list"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2459,7 +2459,7 @@ dependencies = [
 [[package]]
 name = "valence_protocol"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "aes",
  "anyhow",
@@ -2488,7 +2488,7 @@ dependencies = [
 [[package]]
 name = "valence_protocol_macros"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -2499,7 +2499,7 @@ dependencies = [
 [[package]]
 name = "valence_registry"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2517,7 +2517,7 @@ dependencies = [
 [[package]]
 name = "valence_scoreboard"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2529,7 +2529,7 @@ dependencies = [
 [[package]]
 name = "valence_server"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -2557,7 +2557,7 @@ dependencies = [
 [[package]]
 name = "valence_server_common"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2570,7 +2570,7 @@ dependencies = [
 [[package]]
 name = "valence_text"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "serde",
  "serde_json",
@@ -2583,7 +2583,7 @@ dependencies = [
 [[package]]
 name = "valence_weather"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2594,7 +2594,7 @@ dependencies = [
 [[package]]
 name = "valence_world_border"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/?branch=readonly-inventory#454cfd7a03f50d23eb6e8d59bbc246586055dc6c"
+source = "git+https://github.com/maxomatic458/valence/?branch=item-stack-serialize#627f540f4ba6f83c657b6d78df657f9a8ce0d2e0"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
