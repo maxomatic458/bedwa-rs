@@ -119,11 +119,16 @@ impl BedwarsWIPConfig {
 //     item_id: String,
 //     stack_size: i8,
 // }
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ShopOffer {
+    offer: ItemStack,
+    price: ItemStack,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resource)]
 pub struct ShopConfig {
     /// Category -> (item being sold, price)
-    pub shop_items: OrderMap<String, (ItemStack, Vec<(ItemStack, ItemStack)>)>,
+    pub shop_items: OrderMap<String, (ItemStack, Vec<ShopOffer>)>,
 }
 
 pub fn load_config() -> color_eyre::Result<BedwarsConfig> {

@@ -1,17 +1,29 @@
 {
-    "shop_items": {
-        "Blocks": [
-            {
-
-            "item": "stone",
+  "shop_items": {
+    "Blocks": [
+      {
+        "item": "stone",
+        "count": 1,
+        "nbt": {
+          "display": {
+            "Name": "{\"text\":\"TEST\", \"italic\": \"false\"}'}}"
+          }
+        }
+      },
+      [
+        {
+          "offer": {
+            "item": "white_wool",
+            "count": 4,
+            "nbt": null
+          },
+          "price": {
+            "item": "brick",
             "count": 1,
-            "nbt": {
-                "display":
-                    {
-                        "Name": "{\"text\":\"TEST\", \"italic\": \"false\"}'}}"
-                    }
-                }
-            },
-        []]
-    }
+            "nbt": null
+          }
+        }
+      ]
+    ]
+  }
 }
