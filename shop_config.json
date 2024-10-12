@@ -24,6 +24,31 @@
           }
         }
       ]
+    ],
+    "Weapons": [
+      {
+        "item": "iron_sword",
+        "count": 1,
+        "nbt": {
+          "display": {
+            "Name": "{\"text\":\"Weapons\", \"italic\": \"false\"}'}}"
+          }
+        }
+      },
+      [
+        {
+          "offer": {
+            "item": "stone_sword",
+            "count": 1,
+            "nbt": null
+          },
+          "price": {
+            "item": "brick",
+            "count": 1,
+            "nbt": null
+          }
+        }
+      ]
     ]
   }
 }

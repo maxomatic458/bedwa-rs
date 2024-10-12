@@ -121,8 +121,8 @@ impl BedwarsWIPConfig {
 // }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ShopOffer {
-    offer: ItemStack,
-    price: ItemStack,
+    pub offer: ItemStack,
+    pub price: ItemStack,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resource)]
