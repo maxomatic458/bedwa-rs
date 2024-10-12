@@ -1,0 +1,17 @@
+{
+    "shop_items": {
+        "Blocks": [
+            {
+
+            "item_id": "stone",
+            "stack_size": 1,
+            "nbt": {
+                "display":
+                    {
+                        "Name": "{\"text\":\"TEST\", \"italic\": \"false\"}'}}"
+                    }
+                }
+            },
+        []]
+    }
+}
