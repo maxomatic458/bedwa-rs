@@ -10,7 +10,7 @@ use bevy_state::state::OnEnter;
 use valence::{
     app::{Plugin, PreUpdate, Update},
     client::{Client, FlushPacketsSet, Username},
-    entity::{player::PlayerEntity, EntityLayerId},
+    entity::{abstract_fireball::Item, player::PlayerEntity, EntityLayerId},
     prelude::{
         Component, DetectChangesMut, InteractEntityEvent, IntoSystemConfigs, Inventory,
         InventoryKind,
@@ -116,13 +116,15 @@ fn on_shop_click(
         &mut Client,
         &mut Inventory,
         &mut ShopState,
+        &Team,
         &ItemMenu,
     )>,
     mut events: EventReader<MenuItemSelect>,
     shop_config: Res<ShopConfig>,
+    bedwars_config: Res<BedwarsConfig>,
 ) {
     for event in events.read() {
-        let Ok((player_ent, player_name, client, mut inventory, mut shop_state, item_menu)) =
+        let Ok((player_ent, player_name, client, mut inventory, mut shop_state, team, item_menu)) =
             clients.get_mut(event.client)
         else {
             continue;
@@ -145,7 +147,10 @@ fn on_shop_click(
                     shop_state.selected_category = Some(category_name.clone());
                     for item in shop_items {
                         let next_slot = menu_inventory.first_empty_slot().unwrap();
-                        let item_stack = item.offer.clone();
+                        let mut item_stack:ItemStack = item.offer.clone().into();
+                        if item_stack.item == ItemKind::WhiteWool {
+                            item_stack.item = bedwars_config.teams.get(&team.0).unwrap().wool_block();
+                        }
                         menu_inventory.set_slot(next_slot, item_stack);
                     }
 
@@ -172,7 +177,10 @@ fn on_shop_click(
                 if let Some((_, shop_items)) = shop_config.shop_items.get(&category) {
                     if let Some(item_to_buy) = shop_items.get(select_index as usize) {
                         let price = item_to_buy.price.clone().into();
-                        let offer = item_to_buy.offer.clone().into();
+                        let mut offer:ItemStack = item_to_buy.offer.clone().into();
+                        if offer.item == ItemKind::WhiteWool {
+                            offer.item = bedwars_config.teams.get(&team.0).unwrap().wool_block();
+                        }
 
                         tracing::info!("Buying item!");
                         let mut bought = false;
