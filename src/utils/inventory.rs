@@ -6,18 +6,18 @@ pub trait InventoryExt {
 
     /// Returns a tuple of inventory indices and how many items of the stack
     /// could fit in them.
-    /// It is not garuanteed that the stack fully fits in the inventory.
+    /// It is not guaranteed that the stack fully fits in the inventory.
     /// This tries to mirror vanilla behavior.
     fn fill_slots(&self, stack: &ItemStack) -> Vec<(u16, u8)>;
 
     /// Returns a tuple of inventory indices and how many items of that slot
     /// could be removed.
-    /// It is not garuanteed that the full stack can be removed from the
+    /// It is not guaranteed that the full stack can be removed from the
     /// inventory.
     fn remove_slots(&self, stack: &ItemStack) -> Vec<(u16, u8)>;
 
     /// Try to pickup a stack of items,
-    /// It is not garuanteed that the whole stack will
+    /// It is not guaranteed that the whole stack will
     /// go in the inventory
     /// # Returns
     /// The amount of itemrs that were picked up
@@ -44,7 +44,7 @@ impl InventoryExt for Inventory {
         let mut slot_fills = vec![];
         let mut remaining = stack.count;
 
-        let mergable: Vec<u16> = self
+        let mergeable: Vec<u16> = self
             .slots()
             .enumerate()
             .filter_map(|(i, s)| {
@@ -58,7 +58,7 @@ impl InventoryExt for Inventory {
             })
             .collect();
 
-        for i in mergable {
+        for i in mergeable {
             if remaining <= 0 {
                 break;
             }
@@ -119,7 +119,7 @@ impl InventoryExt for Inventory {
     }
 
     fn try_pickup_all(&mut self, stack: &ItemStack) -> bool {
-        let slots_to_fill = self.fill_slots(&stack);
+        let slots_to_fill = self.fill_slots(stack);
 
         let filled: u8 = slots_to_fill.iter().map(|(_, c)| c).sum();
         if filled != stack.count as u8 {

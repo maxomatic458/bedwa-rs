@@ -72,7 +72,7 @@ fn player_respawn(
     health.0 = 20.0;
     *game_mode = GameMode::Survival;
 
-    let team_spawn_pos = bedwars_config.spawns.get(&team.0).unwrap();
+    let team_spawn_pos = bedwars_config.spawns.get(&team.name).unwrap();
     position.set(DVec3::new(
         team_spawn_pos.x as f64,
         team_spawn_pos.y as f64,
@@ -86,7 +86,7 @@ fn on_death(
     match_state: Res<MatchState>,
 ) {
     for (player, mut inventory, mut game_mode, team, mut health) in &mut clients {
-        let bed_destroyed = match_state.teams.get(&team.0).unwrap().bed_destroyed;
+        let bed_destroyed = match_state.teams.get(&team.name).unwrap().bed_destroyed;
         *game_mode = GameMode::Spectator;
         inventory.clear();
         health.0 = 20.0;

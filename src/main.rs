@@ -1,15 +1,16 @@
 use base::{
     break_blocks::BlockBreakPlugin, build::BuildPlugin, combat::CombatPlugin, death::DeathPlugin,
-    drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin, item::ItemEntityPlugin,
-    item_pickup::ItemPickupPlugin, void_death::VoidDeathPlugin,
+    drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin, item_pickup::ItemPickupPlugin,
+    void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
+use colors::TeamColor;
 use commands::bedwars_admin::{handle_bedwars_admin_command, BedwarsAdminCommand};
 use lobby::LobbyPlugin;
 use menu::ItemMenuPlugin;
 use r#match::MatchPlugin;
-use resource_spawners::ResourceSpawnerPlugin;
+// use resource_spawners::ResourceSpawnerPlugin;
 use shop::ShopPlugin;
 use utils::despawn_timer::DespawnTimerPlugin;
 use valence::{
@@ -37,7 +38,10 @@ pub struct LobbyPlayer;
 pub struct SpectatorPlayer;
 /// A component that will be attached to players in a match
 #[derive(Debug, Component)]
-pub struct Team(pub String);
+pub struct Team {
+    pub name: String,
+    pub color: TeamColor,
+}
 
 #[derive(States, Debug, Hash, PartialEq, Eq, Clone, Default)]
 enum GameState {
@@ -69,10 +73,10 @@ fn main() {
         .add_plugins(MatchPlugin)
         .add_plugins(ShopPlugin)
         .add_plugins(ItemPickupPlugin)
-        .add_plugins(ItemEntityPlugin)
+        // .add_plugins(ItemEntityPlugin)
         .add_plugins(DespawnTimerPlugin)
         .add_plugins(ItemDropPlugin)
-        .add_plugins(ResourceSpawnerPlugin)
+        // .add_plugins(ResourceSpawnerPlugin)
         .add_plugins(CombatPlugin)
         .add_systems(Startup, setup)
         .add_systems(

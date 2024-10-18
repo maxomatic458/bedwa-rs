@@ -65,12 +65,17 @@ fn init_shops(
 
         tracing::info!("Initialized shop at {:?}", pos);
         if let Some(team) = team {
-            entity_commands.insert(Team(team.clone()));
+            let team_color = bedwars_config.teams.get(team.as_str()).unwrap();
+            entity_commands.insert(Team {
+                name: team.clone(),
+                color: *team_color,
+            });
         }
     }
 }
 
 /// The player opens the shop by left or right clicking the villager
+#[allow(clippy::type_complexity)]
 fn on_shop_open(
     mut commands: Commands,
     mut events: EventReader<InteractEntityEvent>,
@@ -82,7 +87,7 @@ fn on_shop_open(
         let Ok((player_ent, username)) = players.get(event.client) else {
             continue;
         };
-        let Ok(shop) = shops.get(event.entity) else {
+        let Ok(_shop) = shops.get(event.entity) else {
             continue;
         };
 
@@ -108,11 +113,8 @@ fn main_menu_from_shop_config(shop_config: &ShopConfig) -> ItemMenu {
 }
 
 fn on_shop_click(
-    mut commands: Commands,
     mut inventories: Query<&mut Inventory, Without<Client>>,
     mut clients: Query<(
-        Entity,
-        &Username,
         &mut Client,
         &mut Inventory,
         &mut ShopState,
@@ -124,7 +126,7 @@ fn on_shop_click(
     bedwars_config: Res<BedwarsConfig>,
 ) {
     for event in events.read() {
-        let Ok((player_ent, player_name, client, mut inventory, mut shop_state, team, item_menu)) =
+        let Ok((_client, mut inventory, mut shop_state, team, item_menu)) =
             clients.get_mut(event.client)
         else {
             continue;
@@ -147,10 +149,13 @@ fn on_shop_click(
                     shop_state.selected_category = Some(category_name.clone());
                     for item in shop_items {
                         let next_slot = menu_inventory.first_empty_slot().unwrap();
-                        let mut item_stack:ItemStack = item.offer.clone().into();
+                        let mut item_stack: ItemStack = item.offer.clone().into();
+
                         if item_stack.item == ItemKind::WhiteWool {
-                            item_stack.item = bedwars_config.teams.get(&team.0).unwrap().wool_block();
+                            item_stack.item =
+                                bedwars_config.teams.get(&team.name).unwrap().wool_block();
                         }
+
                         menu_inventory.set_slot(next_slot, item_stack);
                     }
 
@@ -162,6 +167,7 @@ fn on_shop_click(
             }
             Some(category) => {
                 // We are in a category window and are buying an item
+
                 if select_index == SHOP_INVENTORY_TYPE.slot_count() as u16 - 1 {
                     // return to the main menu
                     shop_state.selected_category = None;
@@ -177,25 +183,27 @@ fn on_shop_click(
                 if let Some((_, shop_items)) = shop_config.shop_items.get(&category) {
                     if let Some(item_to_buy) = shop_items.get(select_index as usize) {
                         let price = item_to_buy.price.clone().into();
-                        let mut offer:ItemStack = item_to_buy.offer.clone().into();
+                        let mut offer: ItemStack = item_to_buy.offer.clone().into();
+
                         if offer.item == ItemKind::WhiteWool {
-                            offer.item = bedwars_config.teams.get(&team.0).unwrap().wool_block();
+                            offer.item = bedwars_config.teams.get(&team.name).unwrap().wool_block();
                         }
 
                         tracing::info!("Buying item!");
                         let mut bought = false;
                         if inventory.try_remove_all(&price) {
                             if !inventory.try_pickup_all(&offer) {
+                                // refund
                                 inventory.try_pickup_all(&price);
                             } else {
-                                tracing::info!("Bought item!");
+                                bought = true;
                             }
-                            bought = true;
                         }
 
                         if bought {
-                            // client.play_sound(sound, category, position, volume, pitch);
+                            // TODO success sound
                         } else {
+                            // TODO: error sound
                         }
                     }
                 }

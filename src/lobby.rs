@@ -7,6 +7,7 @@ use bevy_ecs::{
     system::{Commands, Query, Res, ResMut, Resource},
 };
 use bevy_state::state::NextState;
+use bevy_time::{Timer, TimerMode};
 use valence::{
     app::{App, Plugin, Update},
     client::{Client, Username},
@@ -14,7 +15,7 @@ use valence::{
     interact_item::InteractItemEvent,
     inventory::HeldItem,
     nbt::Compound,
-    prelude::{Inventory, InventoryKind, OpenInventory},
+    prelude::{Component, Inventory, InventoryKind, OpenInventory},
     protocol::{sound::SoundCategory, Sound},
     title::SetTitle,
     GameMode, ItemKind, ItemStack,
@@ -53,7 +54,6 @@ impl Plugin for LobbyPlugin {
                 set_action_bar,
             ),
         )
-        .insert_resource(LastUpdatedActionBar(Instant::now()))
         .insert_resource(LobbyPlayerState {
             players: HashMap::new(),
             without_team: 0,
@@ -62,21 +62,14 @@ impl Plugin for LobbyPlugin {
 }
 
 fn init_lobby_player(
-    commands: Commands,
     mut clients: Query<
-        (
-            Entity,
-            &mut Position,
-            &mut GameMode,
-            &mut Inventory,
-            &mut Health,
-        ),
+        (&mut Position, &mut GameMode, &mut Inventory, &mut Health),
         (Added<LobbyPlayer>,),
     >,
     mut lobby_state: ResMut<LobbyPlayerState>,
     bedwars_config: Res<bedwars_config::BedwarsConfig>,
 ) {
-    for (player, mut position, mut game_mode, mut inventory, mut health) in &mut clients {
+    for (mut position, mut game_mode, mut inventory, mut health) in &mut clients {
         tracing::info!("Initializing lobby player");
         position.set(bedwars_config.lobby_spawn.clone());
         *game_mode = GameMode::Survival;
@@ -160,7 +153,10 @@ fn on_team_select(
         };
 
         if let Some((team, team_color)) = bedwars_config.teams.iter().nth(selected_slot as usize) {
-            commands.entity(player).insert(Team(team.to_string()));
+            commands.entity(player).insert(Team {
+                name: team.to_string(),
+                color: *team_color,
+            });
             client.play_sound(
                 Sound::BlockNoteBlockBell,
                 SoundCategory::Master,
@@ -193,25 +189,28 @@ fn on_team_select(
     }
 }
 
-#[derive(Debug, Resource)]
-struct LastUpdatedActionBar(pub Instant);
+const ACTION_BAR_UPDATE_INTERVAL_SEC: f32 = 2.0;
+#[derive(Debug, Component)]
+struct TeamActionBarTimer(pub Timer);
+
+impl Default for TeamActionBarTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(
+            ACTION_BAR_UPDATE_INTERVAL_SEC,
+            TimerMode::Repeating,
+        ))
+    }
+}
 
 /// This will be called every 2 seconds,
 /// to update the action bar for each player
-fn set_action_bar(
-    mut players: Query<(&mut Client, &Team), With<Team>>,
-    bedwars_config: Res<BedwarsConfig>,
-    mut last_run: ResMut<LastUpdatedActionBar>,
-) {
-    let now = Instant::now();
-    if now.duration_since(last_run.0).as_secs() < 2 {
-        return;
-    }
+fn set_action_bar(mut players: Query<(&mut Client, &Team, &TeamActionBarTimer)>) {
+    for (mut client, team, timer) in players.iter_mut() {
+        if !timer.0.just_finished() {
+            continue;
+        }
 
-    last_run.0 = now;
-
-    for (mut client, team) in players.iter_mut() {
-        let team_color = bedwars_config.teams.get(&team.0).unwrap();
-        client.set_action_bar(&format!("{} Team: {}", team_color.text_color(), team.0));
+        let team_color = team.color;
+        client.set_action_bar(&format!("{} Team: {}", team_color.text_color(), team.name));
     }
 }

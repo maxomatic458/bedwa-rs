@@ -55,25 +55,11 @@ fn open_menu(mut commands: Commands, mut clients: Query<(Entity, &mut ItemMenu),
     }
 }
 
-fn close_by_player(
-    trigger: Trigger<OnRemove, OpenInventory>,
-    mut commands: Commands,
-    clients: Query<Entity, With<ItemMenu>>,
-) {
+fn close_by_player(trigger: Trigger<OnRemove, OpenInventory>, mut commands: Commands) {
     commands.entity(trigger.entity()).remove::<ItemMenu>();
-    // for player in clients.iter() {
-    //     tracing::info!("Closing menu by player");
-
-    //     commands.entity(player).remove::<ItemMenu>();
-    // }
 }
 
-fn close_menu(
-    trigger: Trigger<OnRemove, ItemMenu>,
-    mut commands: Commands,
-    clients: Query<(Entity, &Username), With<OpenInventory>>,
-) {
-    tracing::info!("#### closing menu");
+fn close_menu(trigger: Trigger<OnRemove, ItemMenu>, mut commands: Commands) {
     commands.entity(trigger.entity()).remove::<OpenInventory>();
     commands.entity(trigger.entity()).remove::<ItemMenu>();
 }

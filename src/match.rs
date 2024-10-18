@@ -101,7 +101,7 @@ fn start_match(
         inventory.set_slot(9, ItemStack::new(ItemKind::Dirt, 64, None));
         inventory.readonly = false;
 
-        let team_spawn = bedwars_config.spawns.get(&team.0).unwrap();
+        let team_spawn = bedwars_config.spawns.get(&team.name).unwrap();
         pos.set(team_spawn.clone());
 
         commands
@@ -115,7 +115,7 @@ fn start_match(
             .player_stats
             .insert(username.0.clone(), PlayerStats::default());
 
-        let team = match_state.teams.get_mut(&team.0).unwrap();
+        let team = match_state.teams.get_mut(&team.name).unwrap();
 
         team.players.push(username.to_string());
     }
