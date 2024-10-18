@@ -9,7 +9,8 @@ use valence::{
     app::Plugin,
     client::{Client, Username},
     entity::Position,
-    prelude::{Inventory, Resource},
+    equipment::EquipmentInventorySync,
+    prelude::{Equipment, Inventory, Resource},
     GameMode, ItemKind, ItemStack,
 };
 
@@ -106,7 +107,9 @@ fn start_match(
         commands
             .entity(entity)
             .insert(CombatState::default())
-            .insert(FallingState::default());
+            .insert(FallingState::default())
+            .insert(Equipment::default())
+            .insert(EquipmentInventorySync);
 
         match_state
             .player_stats

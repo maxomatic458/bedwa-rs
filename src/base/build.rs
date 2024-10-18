@@ -54,8 +54,14 @@ fn place_blocks(
         let block_hitboxes = block_state.collision_shapes();
         let real_pos = event.position.get_in_direction(event.face);
 
+        if let Some(block) = layer.block(real_pos) {
+            if !block.state.is_air() {
+                return;
+            }
+        }
+
         for mut block_hitbox in block_hitboxes {
-            let tolerance = DVec3::new(0.005, 0.005, 0.005);
+            let tolerance = DVec3::new(0.0, 0.005, 0.0);
 
             block_hitbox = Aabb::new(
                 block_hitbox.min()

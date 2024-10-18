@@ -10,7 +10,7 @@ use bevy_state::state::NextState;
 use valence::{
     app::{App, Plugin, Update},
     client::{Client, Username},
-    entity::{living::Health, Position},
+    entity::{living::Health, player::PlayerEntity, Position},
     interact_item::InteractItemEvent,
     inventory::HeldItem,
     nbt::Compound,
@@ -71,7 +71,7 @@ fn init_lobby_player(
             &mut Inventory,
             &mut Health,
         ),
-        Added<LobbyPlayer>,
+        (Added<LobbyPlayer>,),
     >,
     mut lobby_state: ResMut<LobbyPlayerState>,
     bedwars_config: Res<bedwars_config::BedwarsConfig>,
@@ -126,7 +126,7 @@ fn open_team_selection_menu(
     player: Entity,
     bedwars_config: &BedwarsConfig,
 ) {
-    let mut inv = Inventory::new(InventoryKind::Generic9x3);
+    let mut inv = Inventory::new(InventoryKind::Generic9x1);
     // TODO: set item name to team name
     for (_team_name, color) in &bedwars_config.teams {
         let next_slot = inv.first_empty_slot().unwrap();
@@ -155,37 +155,39 @@ fn on_team_select(
 ) {
     for event in events.read() {
         let selected_slot = event.idx;
-        for (player, pos, mut client, username) in players.iter_mut() {
-            if player != event.client {
-                continue;
-            }
+        let Ok((player, pos, mut client, username)) = players.get_mut(event.client) else {
+            continue;
+        };
 
-            if let Some((team, team_color)) =
-                bedwars_config.teams.iter().nth(selected_slot as usize)
-            {
-                commands.entity(player).insert(Team(team.to_string()));
-                client.play_sound(
-                    Sound::BlockNoteBlockBell,
-                    SoundCategory::Master,
-                    pos.0,
-                    1.0,
-                    1.0,
-                );
+        if let Some((team, team_color)) = bedwars_config.teams.iter().nth(selected_slot as usize) {
+            commands.entity(player).insert(Team(team.to_string()));
+            client.play_sound(
+                Sound::BlockNoteBlockBell,
+                SoundCategory::Master,
+                pos.0,
+                1.0,
+                1.0,
+            );
 
-                commands.entity(player).remove::<OpenInventory>();
+            commands.entity(player).remove::<ItemMenu>();
+            tracing::warn!("removing team selector for {}", username);
 
-                client.set_action_bar(format!("{}{} team", team_color.text_color(), team));
+            client.set_action_bar(format!("{}{} team", team_color.text_color(), team));
 
-                tracing::info!("Player {} selected team {}", username, team);
+            tracing::info!("Player {} selected team {}", username, team);
 
-                lobby_state.players.insert(username.0.clone(), team.clone());
-                lobby_state.without_team -= 1;
+            lobby_state.players.insert(username.0.clone(), team.clone());
+            lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
 
-                if lobby_state.without_team == 0 {
-                    tracing::info!("setting state to match");
+            tracing::warn!("players without team: {}", lobby_state.without_team);
+
+            if lobby_state.without_team == 0 {
+                tracing::info!("setting state to match");
+                for (player, _, _, _) in players.iter() {
                     commands.entity(player).remove::<LobbyPlayer>();
-                    state.set(GameState::Match);
                 }
+
+                state.set(GameState::Match);
             }
         }
     }

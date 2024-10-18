@@ -1,10 +1,12 @@
 use bevy_ecs::query::QueryData;
 use valence::{
     entity::{living::Health, EntityId, EntityStatuses},
-    inventory::HeldItem,
+    inventory::{player_inventory::PlayerInventory, HeldItem},
     prelude::*,
     protocol::{packets::play::EntityDamageS2c, sound::SoundCategory, Sound, WritePacket},
 };
+
+use crate::utils::item_kind::ItemStackExt;
 
 use super::{death::IsDead, fall_damage::FallingState};
 
@@ -93,7 +95,7 @@ fn combat_system(
             continue;
         };
 
-        if attacker.state.last_attacked_tick + 10 >= server.current_tick() {
+        if attacker.state.last_attacked_tick + ATTACK_COOLDOWN_TICKS >= server.current_tick() {
             continue;
         }
 
@@ -118,7 +120,12 @@ fn combat_system(
         let attacker_id = attacker.entity_id.get().into();
         let attacker_pos = attacker.pos.0.into();
 
-        victim.health.0 -= 1.0
+        let attack_weapon = attacker.inventory.slot(attacker.held_item.slot());
+
+        let weapon_damage = attack_weapon.damage();
+        // let weapon_knockback = attack_weapon.knockback();
+
+        victim.health.0 -= weapon_damage
             * if attacker.falling_state.falling {
                 CRIT_MULTIPLIER
             } else {

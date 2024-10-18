@@ -8,28 +8,33 @@ use bevy_ecs::{
 };
 use bevy_state::state::OnEnter;
 use valence::{
-    app::{Plugin, Update},
+    app::{Plugin, PreUpdate, Update},
+    client::{Client, FlushPacketsSet, Username},
     entity::{player::PlayerEntity, EntityLayerId},
-    prelude::{Component, InteractEntityEvent, Inventory, InventoryKind},
-    ChunkLayer, EntityLayer,
+    prelude::{
+        Component, DetectChangesMut, InteractEntityEvent, IntoSystemConfigs, Inventory,
+        InventoryKind,
+    },
+    ChunkLayer, EntityLayer, ItemKind, ItemStack,
 };
 
 use crate::{
     base::death::IsDead,
     bedwars_config::{BedwarsConfig, ShopConfig, ShopOffer},
     menu::{ItemMenu, MenuItemSelect},
-    utils::inventory,
+    utils::inventory::{self, InventoryExt},
     GameState, Team,
 };
 
 // const SHOP_ENTITY_BUNDLE =
+const SHOP_INVENTORY_TYPE: InventoryKind = InventoryKind::Generic9x5;
 
 #[derive(Debug, Clone, Component)]
 pub struct Shop;
 
 #[derive(Component, Default)]
 pub struct ShopState {
-    selected_catagory: Option<String>,
+    selected_category: Option<String>,
 }
 
 pub struct ShopPlugin;
@@ -37,7 +42,7 @@ pub struct ShopPlugin;
 impl Plugin for ShopPlugin {
     fn build(&self, app: &mut valence::prelude::App) {
         app.add_systems(OnEnter(GameState::Match), (init_shops,))
-            .add_systems(Update, (on_click_shopitem, on_shop_open));
+            .add_systems(Update, (on_shop_click, on_shop_open));
     }
 }
 
@@ -47,8 +52,7 @@ fn init_shops(
     bedwars_config: Res<BedwarsConfig>,
     layers: Query<Entity, (With<ChunkLayer>, With<EntityLayer>)>,
 ) {
-    tracing::error!("called");
-
+    tracing::debug!("initializing shops");
     let layer = layers.single();
     for (pos, team) in &bedwars_config.shops {
         let mut entity_commands = commands.spawn(valence::entity::villager::VillagerEntityBundle {
@@ -70,62 +74,126 @@ fn init_shops(
 fn on_shop_open(
     mut commands: Commands,
     mut events: EventReader<InteractEntityEvent>,
-    players: Query<Entity, (With<PlayerEntity>, Without<IsDead>)>,
+    players: Query<(Entity, &Username), (With<PlayerEntity>, Without<IsDead>)>,
     shops: Query<&Shop>,
     shop_config: Res<ShopConfig>,
 ) {
     for event in events.read() {
-        let Ok(player) = players.get(event.client) else {
+        let Ok((player_ent, username)) = players.get(event.client) else {
             continue;
         };
         let Ok(shop) = shops.get(event.entity) else {
             continue;
         };
 
-        let shop_menu = menu_from_shop_config(&shop_config);
+        let shop_menu = main_menu_from_shop_config(&shop_config);
+
+        tracing::debug!("{username} opened shop");
 
         commands
-            .entity(player)
+            .entity(player_ent)
             .insert(shop_menu)
             .insert(ShopState::default());
     }
 }
 
-fn menu_from_shop_config(shop_config: &ShopConfig) -> ItemMenu {
+fn main_menu_from_shop_config(shop_config: &ShopConfig) -> ItemMenu {
     let mut shop_menu = Inventory::new(InventoryKind::Generic9x5);
-    for (idx, (category_name, (category_item, items))) in shop_config.shop_items.iter().enumerate()
-    {
+    for (idx, (_category_name, (category_item, _))) in shop_config.shop_items.iter().enumerate() {
+        // TODO: add category_name via nbt
         shop_menu.set_slot(idx as u16, category_item.clone());
     }
 
     ItemMenu::new(shop_menu)
 }
 
-fn on_click_shopitem(
-    mut clients: Query<(Entity, &mut Inventory, &mut ShopState)>,
+fn on_shop_click(
     mut commands: Commands,
+    mut inventories: Query<&mut Inventory, Without<Client>>,
+    mut clients: Query<(
+        Entity,
+        &Username,
+        &mut Client,
+        &mut Inventory,
+        &mut ShopState,
+        &ItemMenu,
+    )>,
     mut events: EventReader<MenuItemSelect>,
     shop_config: Res<ShopConfig>,
 ) {
     for event in events.read() {
-        let select_index = event.idx;
-        let Ok((player_ent, mut inventory, mut shop_state)) = clients.get_mut(event.client) else {
+        let Ok((player_ent, player_name, client, mut inventory, mut shop_state, item_menu)) =
+            clients.get_mut(event.client)
+        else {
             continue;
         };
-        if let Some((shop_catagory_name, (_, shop_items))) =
-            shop_config.shop_items.get_index(select_index.into())
-        {
-            commands.entity(player_ent).remove::<ItemMenu>();
 
-            shop_state.selected_catagory = Some(shop_catagory_name.clone());
-            let mut inv = Inventory::new(InventoryKind::Generic9x5);
-            for item in shop_items {
-                let next_slot = inv.first_empty_slot().unwrap();
-                let item_stack = item.offer.clone();
-                inv.set_slot(next_slot, item_stack);
+        let Ok(mut menu_inventory) = inventories.get_mut(item_menu.inventory_ent().unwrap()) else {
+            continue;
+        };
+
+        let select_index = event.idx;
+
+        let category = shop_state.selected_category.clone();
+        match category {
+            None => {
+                if let Some((category_name, (_, shop_items))) =
+                    shop_config.shop_items.get_index(select_index as usize)
+                {
+                    menu_inventory.clear();
+
+                    shop_state.selected_category = Some(category_name.clone());
+                    for item in shop_items {
+                        let next_slot = menu_inventory.first_empty_slot().unwrap();
+                        let item_stack = item.offer.clone();
+                        menu_inventory.set_slot(next_slot, item_stack);
+                    }
+
+                    menu_inventory.set_slot(
+                        SHOP_INVENTORY_TYPE.slot_count() as u16 - 1,
+                        ItemStack::new(ItemKind::Barrier, 1, None),
+                    );
+                }
             }
-            let menu = ItemMenu::new(inv);
-            commands.entity(player_ent).insert(menu);
+            Some(category) => {
+                // We are in a category window and are buying an item
+                if select_index == SHOP_INVENTORY_TYPE.slot_count() as u16 - 1 {
+                    // return to the main menu
+                    shop_state.selected_category = None;
+                    menu_inventory.clear();
+                    for (idx, (_category_name, (category_item, _))) in
+                        shop_config.shop_items.iter().enumerate()
+                    {
+                        // TODO: add category_name via nbt
+                        menu_inventory.set_slot(idx as u16, category_item.clone());
+                    }
+                }
+
+                if let Some((_, shop_items)) = shop_config.shop_items.get(&category) {
+                    if let Some(item_to_buy) = shop_items.get(select_index as usize) {
+                        let price = item_to_buy.price.clone().into();
+                        let offer = item_to_buy.offer.clone().into();
+
+                        tracing::info!("Buying item!");
+                        let mut bought = false;
+                        if inventory.try_remove_all(&price) {
+                            if !inventory.try_pickup_all(&offer) {
+                                inventory.try_pickup_all(&price);
+                            } else {
+                                tracing::info!("Bought item!");
+                            }
+                            bought = true;
+                        }
+
+                        if bought {
+                            // client.play_sound(sound, category, position, volume, pitch);
+                        } else {
+                        }
+                    }
+                }
+
+                // Buy an item
+            }
         }
     }
 }

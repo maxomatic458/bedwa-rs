@@ -18,7 +18,7 @@
             "nbt": null
           },
           "price": {
-            "item": "brick",
+            "item": "dirt",
             "count": 1,
             "nbt": null
           }
@@ -40,10 +40,17 @@
           "offer": {
             "item": "stone_sword",
             "count": 1,
-            "nbt": null
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:sharpness",
+                  "lvl": 100
+                }
+              ]
+            }
           },
           "price": {
-            "item": "brick",
+            "item": "dirt",
             "count": 1,
             "nbt": null
           }

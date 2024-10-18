@@ -113,22 +113,60 @@ impl BedwarsWIPConfig {
 //         )
 //     }
 // }
+#[derive(Debug, Clone, PartialEq)]
+struct SerItemKind(pub ItemKind);
 
-// #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
-// pub struct ShopPrice {
-//     item_id: String,
-//     stack_size: i8,
-// }
+impl Serialize for SerItemKind {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        self.0.to_str().serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for SerItemKind {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let s = String::deserialize(deserializer)?;
+        Ok(Self(ItemKind::from_str(&s).unwrap()))
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+pub struct SerItemStack {
+    item: SerItemKind,
+    count: i8,
+    nbt: Option<Compound>,
+}
+
+impl From<SerItemStack> for ItemStack {
+    fn from(stack: SerItemStack) -> Self {
+        ItemStack::new(stack.item.0, stack.count, stack.nbt)
+    }
+}
+
+impl From<ItemStack> for SerItemStack {
+    fn from(stack: ItemStack) -> Self {
+        Self {
+            item: SerItemKind(stack.item),
+            count: stack.count,
+            nbt: stack.nbt,
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+pub struct ShopPrice {
+    item_id: String,
+    stack_size: i8,
+}
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ShopOffer {
-    pub offer: ItemStack,
-    pub price: ItemStack,
+    pub offer: SerItemStack,
+    pub price: SerItemStack,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Resource)]
 pub struct ShopConfig {
     /// Category -> (item being sold, price)
-    pub shop_items: OrderMap<String, (ItemStack, Vec<ShopOffer>)>,
+    pub shop_items: OrderMap<String, (SerItemStack, Vec<ShopOffer>)>,
 }
 
 pub fn load_config() -> color_eyre::Result<BedwarsConfig> {
@@ -141,4 +179,5 @@ pub fn load_trader_config() -> color_eyre::Result<ShopConfig> {
     let config = std::fs::read_to_string("shop_config.json")?;
     let config: ShopConfig = serde_json::from_str(&config)?;
     Ok(config)
+    // todo!();
 }

@@ -54,7 +54,7 @@ fn pickup_items(
                 continue;
             }
 
-            let picked_up = player_inv.try_pickup_stack(stack.0.clone());
+            let picked_up = player_inv.try_pickup_stack(&stack.0);
 
             if picked_up == 0 {
                 continue;
