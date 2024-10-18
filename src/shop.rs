@@ -8,8 +8,9 @@ use bevy_state::{prelude::in_state, state::OnEnter};
 use valence::{
     app::{Plugin, Update},
     client::{Client, Username},
-    entity::{player::PlayerEntity, EntityLayerId, HeadYaw, Look},
+    entity::{player::PlayerEntity, EntityLayerId, HeadYaw, Look, Position},
     prelude::{Component, InteractEntityEvent, IntoSystemConfigs, Inventory, InventoryKind},
+    protocol::{sound::SoundCategory, Sound},
     ChunkLayer, EntityLayer, ItemKind, ItemStack,
 };
 
@@ -82,21 +83,30 @@ fn init_shops(
 fn on_shop_open(
     mut commands: Commands,
     mut events: EventReader<InteractEntityEvent>,
-    players: Query<(Entity, &Username), (With<PlayerEntity>, Without<IsDead>)>,
-    shops: Query<&Shop>,
+    mut players: Query<(Entity, &mut Client, &Username), (With<PlayerEntity>, Without<IsDead>)>,
+    shops: Query<&Position, With<Position>>,
     shop_config: Res<ShopConfig>,
 ) {
     for event in events.read() {
-        let Ok((player_ent, username)) = players.get(event.client) else {
+        let Ok((player_ent, mut client, username)) = players.get_mut(event.client) else {
             continue;
         };
-        let Ok(_shop) = shops.get(event.entity) else {
+
+        let Ok(shop_position) = shops.get(event.entity) else {
             continue;
         };
 
         let shop_menu = main_menu_from_shop_config(&shop_config);
 
         tracing::debug!("{username} opened shop");
+
+        client.play_sound(
+            Sound::EntityVillagerAmbient,
+            SoundCategory::Neutral,
+            shop_position.0,
+            0.5,
+            1.0,
+        );
 
         commands
             .entity(player_ent)
@@ -119,6 +129,7 @@ fn on_shop_click(
     mut inventories: Query<&mut Inventory, Without<Client>>,
     mut clients: Query<(
         &mut Client,
+        &Position,
         &mut Inventory,
         &mut ShopState,
         &Team,
@@ -129,7 +140,7 @@ fn on_shop_click(
     bedwars_config: Res<BedwarsConfig>,
 ) {
     for event in events.read() {
-        let Ok((_client, mut inventory, mut shop_state, team, item_menu)) =
+        let Ok((mut client, position, mut inventory, mut shop_state, team, item_menu)) =
             clients.get_mut(event.client)
         else {
             continue;
@@ -192,7 +203,6 @@ fn on_shop_click(
                             offer.item = bedwars_config.teams.get(&team.name).unwrap().wool_block();
                         }
 
-                        tracing::info!("Buying item!");
                         let mut bought = false;
                         if inventory.try_remove_all(&price) {
                             if !inventory.try_pickup_all(&offer) {
@@ -205,8 +215,22 @@ fn on_shop_click(
 
                         if bought {
                             // TODO success sound
+                            client.play_sound(
+                                Sound::BlockNoteBlockBell,
+                                SoundCategory::Master,
+                                position.0,
+                                1.0,
+                                1.8,
+                            );
                         } else {
                             // TODO: error sound
+                            client.play_sound(
+                                Sound::BlockNoteBlockBass,
+                                SoundCategory::Master,
+                                position.0,
+                                1.0,
+                                0.8,
+                            );
                         }
                     }
                 }

@@ -10,7 +10,10 @@ use valence::{
     ItemStack,
 };
 
-use crate::{bedwars_config::BedwarsConfig, r#match::MatchState, GameState, Team};
+use crate::{
+    base::item_pickup::PickupMarker, bedwars_config::BedwarsConfig, r#match::MatchState, GameState,
+    Team,
+};
 
 pub struct ResourceSpawnerPlugin;
 
@@ -73,13 +76,18 @@ fn spawn_resources(
 
             let layer = layers.single();
 
-            commands.spawn(ItemEntityBundle {
-                item_stack: Stack(spawner.item.clone()),
-                layer: EntityLayerId(layer),
-                position: *pos,
-                entity_no_gravity: NoGravity(true),
-                ..Default::default()
-            });
+            // adjust pos to center of block
+            let pos = DVec3::new(pos.0.x - 0.5, pos.0.y, pos.0.z - 0.5);
+
+            commands
+                .spawn(ItemEntityBundle {
+                    item_stack: Stack(spawner.item.clone()),
+                    layer: EntityLayerId(layer),
+                    position: Position(pos),
+                    entity_no_gravity: NoGravity(true),
+                    ..Default::default()
+                })
+                .insert(PickupMarker);
         }
     }
 }

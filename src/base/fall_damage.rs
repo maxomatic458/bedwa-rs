@@ -1,19 +1,20 @@
-use valence::{
-    entity::{living::Health, EntityId},
-    math::Aabb,
-    prelude::*,
-    protocol::{packets::play::EntityDamageS2c, sound::SoundCategory, Sound, WritePacket},
-};
+use bevy_state::prelude::in_state;
+use valence::{client::UpdateClientsSet, math::Aabb, prelude::*};
 
-use crate::utils::ray_cast::aabb_full_block_intersections;
+use crate::{utils::ray_cast::aabb_full_block_intersections, GameState};
 
-use super::death::IsDead;
+use super::death::{IsDead, PlayerHurtEvent};
 
 pub struct FallDamagePlugin;
 
 impl Plugin for FallDamagePlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_fall_damage);
+        app.add_systems(
+            Update,
+            handle_fall_damage
+                .before(UpdateClientsSet)
+                .run_if(in_state(GameState::Match)),
+        );
     }
 }
 
@@ -25,20 +26,14 @@ pub struct FallingState {
 
 #[allow(clippy::type_complexity)]
 fn handle_fall_damage(
-    mut all_clients: Query<&mut Client>,
     mut clients: Query<
-        (
-            &EntityId,
-            &mut FallingState,
-            &Position,
-            &mut Health,
-            &Hitbox,
-        ),
+        (Entity, &mut FallingState, &Position, &Hitbox),
         (Changed<Position>, Without<IsDead>),
     >,
     layers: Query<&ChunkLayer, With<EntityLayer>>,
+    mut event_writer: EventWriter<PlayerHurtEvent>,
 ) {
-    for (player_id, mut fall_damage_state, position, mut health, hitbox) in &mut clients {
+    for (player_ent, mut fall_damage_state, position, hitbox) in &mut clients {
         let layer = layers.single();
 
         let flattened_player_hitbox = Aabb::new(
@@ -59,26 +54,14 @@ fn handle_fall_damage(
             if fall_damage_state.falling {
                 let blocks_fallen = fall_damage_state.fall_start_y - position.0.y;
                 if blocks_fallen >= 3.0 {
-                    let damage = (blocks_fallen - 3.0).max(0.0);
-                    health.0 -= damage as f32;
+                    let damage = (blocks_fallen - 3.0).max(0.0) as f32;
 
-                    for mut client in &mut all_clients {
-                        client.play_sound(
-                            Sound::EntityPlayerHurt,
-                            SoundCategory::Hostile,
-                            position.0,
-                            1.0,
-                            1.0,
-                        );
-
-                        client.write_packet(&EntityDamageS2c {
-                            entity_id: player_id.get().into(),
-                            source_type_id: 1.into(), // idk what 1 is, probably physical damage
-                            source_cause_id: 0.into(),
-                            source_direct_id: 0.into(),
-                            source_pos: None,
-                        });
-                    }
+                    event_writer.send(PlayerHurtEvent {
+                        attacker: None,
+                        victim: player_ent,
+                        position: position.0,
+                        damage,
+                    });
                 }
 
                 fall_damage_state.fall_start_y = position.0.y;

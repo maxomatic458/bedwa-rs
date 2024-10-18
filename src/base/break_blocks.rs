@@ -8,7 +8,9 @@ use entity::{
     EntityLayerId, Position, Velocity,
 };
 use math::{DVec3, Vec3};
-use prelude::{Commands, Entity, EventReader, IntoSystemConfigs, Query, Res, ResMut};
+use prelude::{
+    Commands, Entity, Event, EventReader, EventWriter, IntoSystemConfigs, Query, Res, ResMut,
+};
 use rand::Rng;
 use valence::*;
 
@@ -18,18 +20,26 @@ use crate::{
 };
 
 use super::{build::PlayerPlacedBlocks, drop_items::DroppedItemsPickupTimer};
-use crate::utils::item_kind::ItemKindExt;
+use crate::utils::item_kind::ItemKindExtColor;
 /// Strength of random velocity applied to the dropped item after breaking a block
 const BLOCK_BREAK_DROP_STRENGTH: f32 = 0.05 * 20.0;
 
 pub struct BlockBreakPlugin;
 
+#[derive(Debug, Event, PartialEq)]
+pub struct BedDestroyedEvent {
+    pub attacker: Entity,
+    pub team: Team,
+}
+
 impl Plugin for BlockBreakPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (break_blocks,).run_if(in_state(GameState::Match)));
+        app.add_systems(Update, (break_blocks,).run_if(in_state(GameState::Match)))
+            .add_event::<BedDestroyedEvent>();
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn break_blocks(
     mut commands: Commands,
     clients: Query<(&Username, &Team)>,
@@ -38,6 +48,7 @@ fn break_blocks(
     player_placed_blocks: Res<PlayerPlacedBlocks>,
     bedwars_config: Res<BedwarsConfig>,
     mut match_state: ResMut<MatchState>,
+    mut event_writer: EventWriter<BedDestroyedEvent>,
 ) {
     let (layer, mut layer_mut) = layer.single_mut();
 
@@ -69,8 +80,18 @@ fn break_blocks(
                     layer_mut.set_block(BlockPos::new(block.x, block.y, block.z), BlockState::AIR);
                 }
 
-                let team_state = match_state.teams.get_mut(team_name).unwrap();
-                team_state.bed_destroyed = true;
+                let victim_team_color = bedwars_config.teams.get(team_name).unwrap();
+
+                let victim_team_state = match_state.teams.get_mut(team_name).unwrap();
+                victim_team_state.bed_destroyed = true;
+
+                event_writer.send(BedDestroyedEvent {
+                    attacker: event.client,
+                    team: Team {
+                        name: team_name.clone(),
+                        color: *victim_team_color,
+                    },
+                });
             }
         }
 

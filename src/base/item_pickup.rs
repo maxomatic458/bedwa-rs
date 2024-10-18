@@ -6,14 +6,12 @@ use valence::{
     app::{App, Plugin, Update},
     client::Client,
     entity::{item::Stack, Position},
-    prelude::Inventory,
+    prelude::{Component, Inventory},
     protocol::{sound::SoundCategory, Sound},
     Despawned,
 };
 
 use crate::utils::inventory::InventoryExt;
-
-use super::drop_items::DroppedItemsPickupTimer;
 
 // https://minecraft.fandom.com/wiki/Item_(entity)
 
@@ -21,6 +19,10 @@ const PICKUP_RANGE_HOR: f64 = 1.0;
 const PICKUP_RANGE_VER: f64 = 0.5;
 
 pub struct ItemPickupPlugin;
+
+/// A marker for items that can be picked up
+#[derive(Component)]
+pub struct PickupMarker;
 
 impl Plugin for ItemPickupPlugin {
     fn build(&self, app: &mut App) {
@@ -31,11 +33,11 @@ impl Plugin for ItemPickupPlugin {
 fn pickup_items(
     mut commands: Commands,
     mut players: Query<(&Position, &mut Inventory, &mut Client)>,
-    mut items: Query<(Entity, &Position, &mut Stack, &DroppedItemsPickupTimer)>,
+    mut items: Query<(Entity, &Position, &mut Stack, &PickupMarker)>,
 ) {
     // This will be really inefficient, but for a bedwars server it probably won't matter
     for (player_pos, mut player_inv, mut client) in players.iter_mut() {
-        for (item_entity, item_pos, mut stack, pickup_timer) in items.iter_mut() {
+        for (item_entity, item_pos, mut stack, _pickup_timer) in items.iter_mut() {
             let player_vec3 = player_pos.0;
             let item_vec3 = item_pos.0;
 
@@ -47,10 +49,6 @@ fn pickup_items(
                 || dy.abs() > PICKUP_RANGE_VER
                 || dz.abs() > PICKUP_RANGE_HOR
             {
-                continue;
-            }
-
-            if !pickup_timer.0.finished() {
                 continue;
             }
 

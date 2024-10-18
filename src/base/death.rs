@@ -1,27 +1,55 @@
 use bevy_ecs::query::Added;
 use bevy_state::prelude::in_state;
 use bevy_time::{Time, Timer, TimerMode};
+use valence::client::UpdateClientsSet;
+use valence::entity::EntityId;
 use valence::prelude::Inventory;
+use valence::protocol::packets::play::EntityDamageS2c;
+use valence::protocol::sound::SoundCategory;
+use valence::protocol::{Sound, WritePacket};
+use valence::Layer;
 use valence::{entity::living::Health, prelude::*};
 
+use crate::Spectator;
 use crate::{
     bedwars_config::BedwarsConfig, r#match::MatchState, utils::inventory::InventoryExt, GameState,
     Team,
 };
 
-const PLAYER_RESPAWN_TIMER: f32 = 5.0;
+const PLAYER_RESPAWN_TIMER_SECS: u32 = 5;
 
 #[derive(Debug, Clone, Component)]
 pub struct IsDead;
 
 pub struct DeathPlugin;
 #[derive(Debug, Clone, Component)]
-pub struct RespawnTimer(pub Timer);
+pub struct RespawnTimer {
+    pub repeats: u32,
+    pub timer: Timer,
+}
 
 impl Default for RespawnTimer {
     fn default() -> Self {
-        Self(Timer::from_seconds(PLAYER_RESPAWN_TIMER, TimerMode::Once))
+        Self {
+            repeats: PLAYER_RESPAWN_TIMER_SECS,
+            timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+        }
     }
+}
+
+#[derive(Debug, Clone, Event)]
+pub struct PlayerDeathEvent {
+    pub attacker: Option<Entity>, // <- player killed themselves
+    pub victim: Entity,
+    pub position: DVec3,
+}
+
+#[derive(Debug, Clone, Event)]
+pub struct PlayerHurtEvent {
+    pub attacker: Option<Entity>, // <- player killed themselves
+    pub victim: Entity,
+    pub position: DVec3,
+    pub damage: f32,
 }
 
 impl Plugin for DeathPlugin {
@@ -29,11 +57,15 @@ impl Plugin for DeathPlugin {
         app.add_systems(
             Update,
             (
+                on_player_hurt
+                    .before(UpdateClientsSet)
+                    .run_if(in_state(GameState::Match)),
                 on_death.run_if(in_state(GameState::Match)),
                 tick_respawn_timer,
-                on_take_damage.run_if(in_state(GameState::Match)),
             ),
         )
+        .add_event::<PlayerHurtEvent>()
+        .add_event::<PlayerDeathEvent>()
         .observe(player_respawn);
     }
 }
@@ -41,17 +73,24 @@ impl Plugin for DeathPlugin {
 fn tick_respawn_timer(
     mut commands: Commands,
     time: Res<Time>,
-    mut clients: Query<(Entity, &mut Client, &mut RespawnTimer)>,
+    mut clients: Query<(Entity, &mut Client, &Position, &mut RespawnTimer)>,
 ) {
-    for (player, mut client, mut timer) in &mut clients {
-        let _seconds_left = timer.0.remaining_secs();
-        timer.0.tick(time.delta());
+    for (player, mut client, position, mut timer) in &mut clients {
+        if timer.timer.tick(time.delta()).just_finished() {
+            timer.repeats -= 1;
+            client.set_title_times(0, 21, 0);
+            client.set_title(format!("Respawn in: {}", timer.repeats));
 
-        // client.set_title(format!("Respawn in: {}", seconds_left as u32));
+            client.play_sound(
+                Sound::BlockDispenserDispense,
+                SoundCategory::Master,
+                position.0,
+                2.0,
+                1.0,
+            );
+        }
 
-        // client.play_sound(Sound::BlockDispenserDispense, SoundCategory::Block, client.p, volume, pitch);
-
-        if timer.0.finished() {
+        if timer.timer.finished() && timer.repeats == 0 {
             commands.entity(player).remove::<IsDead>();
             commands.entity(player).remove::<RespawnTimer>(); // is this required?
             client.clear_title();
@@ -61,7 +100,7 @@ fn tick_respawn_timer(
 
 fn player_respawn(
     trigger: Trigger<OnRemove, IsDead>,
-    mut clients: Query<(&mut Position, &mut Health, &mut GameMode, &Team)>,
+    mut clients: Query<(&mut Position, &mut Health, &mut GameMode, &Team), Without<Spectator>>,
     bedwars_config: Res<BedwarsConfig>,
 ) {
     let Ok((mut position, mut health, mut game_mode, team)) = clients.get_mut(trigger.entity())
@@ -80,29 +119,104 @@ fn player_respawn(
     ))
 }
 
+#[allow(clippy::type_complexity)]
 fn on_death(
     mut commands: Commands,
-    mut clients: Query<(Entity, &mut Inventory, &mut GameMode, &Team, &mut Health), Added<IsDead>>,
+    mut clients: Query<
+        (
+            Entity,
+            &Position,
+            &mut Inventory,
+            &mut GameMode,
+            &Team,
+            &mut Health,
+        ),
+        Added<IsDead>,
+    >,
     match_state: Res<MatchState>,
+    mut layer: Query<&mut ChunkLayer>,
 ) {
-    for (player, mut inventory, mut game_mode, team, mut health) in &mut clients {
+    for (player_ent, position, mut inventory, mut game_mode, team, mut health) in &mut clients {
         let bed_destroyed = match_state.teams.get(&team.name).unwrap().bed_destroyed;
         *game_mode = GameMode::Spectator;
         inventory.clear();
         health.0 = 20.0;
 
+        let mut layer = layer.single_mut();
+        layer.play_sound(
+            Sound::EntityPlayerDeath,
+            SoundCategory::Master,
+            position.0,
+            1.0,
+            1.0,
+        );
+
         if !bed_destroyed {
-            let player_respawn_timer = RespawnTimer(Timer::from_seconds(5.0, TimerMode::Once));
-            commands.entity(player).insert(player_respawn_timer);
+            let player_respawn_timer = RespawnTimer::default();
+            commands.entity(player_ent).insert(player_respawn_timer);
+        } else {
+            commands.entity(player_ent).insert(Spectator);
+            commands.entity(player_ent).remove::<IsDead>();
+            commands.entity(player_ent).remove::<Team>();
         }
     }
 }
 
-fn on_take_damage(mut commands: Commands, mut clients: Query<(Entity, &mut Health)>) {
-    for (player_ent, mut health) in &mut clients {
-        if health.0 <= 0.0 {
-            health.0 = 20.0;
-            commands.entity(player_ent).insert(IsDead);
+fn on_player_hurt(
+    mut commands: Commands,
+    mut clients: Query<(&EntityId, &mut Health)>,
+    mut events: EventReader<PlayerHurtEvent>,
+    mut event_writer: EventWriter<PlayerDeathEvent>,
+    mut layer: Query<&mut ChunkLayer>,
+) {
+    for event in events.read() {
+        let Ok((victim_id, mut victim_health)) = clients.get_mut(event.victim) else {
+            continue;
+        };
+
+        let victim_id = victim_id.get();
+
+        let mut layer = layer.single_mut();
+
+        let new_health = victim_health.0 - event.damage;
+
+        if new_health <= 0.0 {
+            event_writer.send(PlayerDeathEvent {
+                attacker: event.attacker,
+                victim: event.victim,
+                position: event.position,
+            });
+            layer.play_sound(
+                Sound::EntityPlayerDeath,
+                SoundCategory::Player,
+                event.position,
+                1.0,
+                1.0,
+            );
+            commands.entity(event.victim).insert(IsDead);
+        } else {
+            layer.play_sound(
+                Sound::EntityPlayerHurt,
+                SoundCategory::Player,
+                event.position,
+                1.0,
+                1.0,
+            );
+            victim_health.0 = new_health;
         }
+
+        let attacker_id = event
+            .attacker
+            .map(|attacker| clients.get(attacker).map(|(id, _)| *id).unwrap_or_default());
+
+        layer
+            .view_writer(event.position)
+            .write_packet(&EntityDamageS2c {
+                entity_id: victim_id.into(),
+                source_type_id: 1.into(), // idk what 1 is, probably physical damage
+                source_cause_id: attacker_id.unwrap_or_default().get().into(),
+                source_direct_id: attacker_id.unwrap_or_default().get().into(),
+                source_pos: Some(event.position),
+            });
     }
 }

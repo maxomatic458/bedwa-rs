@@ -50,7 +50,7 @@ impl InventoryExt for Inventory {
             .filter_map(|(i, s)| {
                 if s.is_empty() {
                     None
-                } else if s.item == stack.item && s.count < 64 {
+                } else if s.item == stack.item && s.count < s.item.max_stack() {
                     Some(i as u16)
                 } else {
                     None
@@ -64,7 +64,7 @@ impl InventoryExt for Inventory {
             }
 
             let slot_count = self.slot(i).count;
-            let space = 64 - slot_count;
+            let space = stack.item.max_stack() - slot_count;
             let to_merge = remaining.min(space);
 
             slot_fills.push((i, to_merge as u8));
@@ -77,7 +77,7 @@ impl InventoryExt for Inventory {
         // first we try to fill up the hotbar
         while remaining > 0 {
             if let Some(next_empty) = self.first_empty_slot_in(HOTBAR_RANGE) {
-                let to_fill = remaining.min(64);
+                let to_fill = remaining.min(stack.item.max_stack());
 
                 slot_fills.push((next_empty, to_fill as u8));
 
@@ -90,7 +90,7 @@ impl InventoryExt for Inventory {
         // then we try to fill up the inventory
         while remaining > 0 {
             if let Some(next_empty) = self.first_empty_slot_in(INVENTORY_RANGE) {
-                let to_fill = remaining.min(64);
+                let to_fill = remaining.min(stack.item.max_stack());
                 slot_fills.push((next_empty, to_fill as u8));
                 remaining -= to_fill;
             } else {

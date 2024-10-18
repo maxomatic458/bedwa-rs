@@ -1,7 +1,7 @@
 use base::{
-    break_blocks::BlockBreakPlugin, build::BuildPlugin, combat::CombatPlugin, death::DeathPlugin,
-    drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin, item_pickup::ItemPickupPlugin,
-    void_death::VoidDeathPlugin,
+    break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin,
+    death::DeathPlugin, drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin,
+    item_pickup::ItemPickupPlugin, void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -14,6 +14,7 @@ use r#match::MatchPlugin;
 use resource_spawners::ResourceSpawnerPlugin;
 // use resource_spawners::ResourceSpawnerPlugin;
 use shop::ShopPlugin;
+use spectator::SpectatorPlugin;
 use utils::despawn_timer::DespawnTimerPlugin;
 use valence::{anvil::AnvilLevel, command::AddCommand, prelude::*};
 
@@ -27,6 +28,7 @@ pub mod r#match;
 pub mod menu;
 pub mod resource_spawners;
 pub mod shop;
+pub mod spectator;
 pub mod utils;
 
 /// A component that will be attached to players in the lobby
@@ -34,14 +36,18 @@ pub mod utils;
 pub struct LobbyPlayer;
 /// A component that will be attached to players spectating a match
 #[derive(Debug, Default, Component)]
-pub struct SpectatorPlayer;
+pub struct Spectator;
+
+/// A component that will be attached to players that are still playing
+#[derive(Debug, Default, Component)]
+pub struct ActivePlayer;
 
 /// A component that will be attached to players that are editing the map
 #[derive(Debug, Default, Component)]
 pub struct Editor;
 
 /// A component that will be attached to players in a match
-#[derive(Debug, Component)]
+#[derive(Debug, Clone, Component, PartialEq)]
 pub struct Team {
     pub name: String,
     pub color: TeamColor,
@@ -65,6 +71,8 @@ fn main() {
 
     App::new()
         .add_plugins(StatesPlugin)
+        .add_plugins(ChatPlugin)
+        .add_plugins(SpectatorPlugin)
         .add_plugins(EditPlugin)
         .add_plugins(VoidDeathPlugin)
         .add_plugins(DeathPlugin)
@@ -172,7 +180,7 @@ fn init_clients(
                 commands.entity(entity).insert(LobbyPlayer);
             }
             GameState::Match => {
-                commands.entity(entity).insert(SpectatorPlayer);
+                commands.entity(entity).insert(Spectator);
             }
             GameState::Edit => {
                 commands.entity(entity).insert(Editor);

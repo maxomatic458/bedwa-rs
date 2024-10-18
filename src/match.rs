@@ -2,20 +2,25 @@ use std::collections::HashMap;
 
 use bevy_ecs::{
     entity::Entity,
+    event::EventReader,
     system::{Commands, Query, Res},
 };
-use bevy_state::state::OnEnter;
+use bevy_state::{prelude::in_state, state::OnEnter};
 use valence::{
-    app::Plugin,
+    app::{Plugin, Update},
     client::{Client, Username},
     entity::Position,
     equipment::EquipmentInventorySync,
-    prelude::{Equipment, Inventory, Resource},
-    GameMode, ItemKind, ItemStack,
+    math::DVec3,
+    message::SendMessage,
+    prelude::{Equipment, IntoSystemConfigs, Inventory, Resource},
+    protocol::{sound::SoundCategory, Sound},
+    title::SetTitle,
+    ChunkLayer, GameMode, ItemKind, ItemStack,
 };
 
 use crate::{
-    base::{combat::CombatState, fall_damage::FallingState},
+    base::{break_blocks::BedDestroyedEvent, combat::CombatState, fall_damage::FallingState},
     bedwars_config::BedwarsConfig,
     utils::inventory::InventoryExt,
     GameState, Team,
@@ -64,7 +69,8 @@ pub struct MatchPlugin;
 
 impl Plugin for MatchPlugin {
     fn build(&self, app: &mut valence::app::App) {
-        app.add_systems(OnEnter(GameState::Match), (start_match,));
+        app.add_systems(OnEnter(GameState::Match), (start_match,))
+            .add_systems(Update, (on_bed_destroy,).run_if(in_state(GameState::Match)));
         // app.add_systems(Update, (
 
         // ))
@@ -121,4 +127,31 @@ fn start_match(
     }
 
     commands.insert_resource(match_state);
+}
+
+fn on_bed_destroy(
+    mut clients: Query<(&mut Client, &Team)>,
+    mut events: EventReader<BedDestroyedEvent>,
+    mut layer: Query<&mut ChunkLayer>,
+    bedwars_config: Res<BedwarsConfig>,
+) {
+    for event in events.read() {
+        for (mut client, team) in &mut clients {
+            if team == &event.team {
+                client.set_title("§cyour bed was destroyed!");
+                client.send_chat_message("§cYour bed was destroyed!");
+            }
+        }
+
+        let bed_pos = bedwars_config.beds.get(&event.team.name).unwrap();
+
+        let mut layer = layer.single_mut();
+        layer.play_sound(
+            Sound::EntityHorseDeath,
+            SoundCategory::Master,
+            Into::<DVec3>::into(bed_pos[0].clone()),
+            1.0,
+            1.0,
+        );
+    }
 }

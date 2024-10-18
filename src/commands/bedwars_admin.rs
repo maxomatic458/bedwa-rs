@@ -11,7 +11,7 @@ use parsers::Vec3 as Vec3Parser;
 
 use crate::bedwars_config::{BedwarsWIPConfig, ConfigVec3};
 use crate::colors::TeamColor;
-use crate::utils::item_kind::ItemKindExt;
+use crate::utils::item_kind::ItemKindExtColor;
 
 // TODO: in addition to the commands
 // make this possible via a "edit mode"
