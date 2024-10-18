@@ -25,7 +25,7 @@ use crate::{
 pub struct MatchState {
     pub started: std::time::Instant,
     pub player_stats: HashMap<String, PlayerStats>,
-    pub teams: HashMap<String, TeamStats>,
+    pub teams: HashMap<String, TeamState>,
 }
 
 impl Default for MatchState {
@@ -54,7 +54,7 @@ pub struct PlayerStats {
 }
 
 #[derive(Debug, Clone, Default)]
-pub struct TeamStats {
+pub struct TeamState {
     pub players: Vec<String>,
     pub players_alive: Vec<String>,
     pub bed_destroyed: bool,
@@ -90,15 +90,15 @@ fn start_match(
     for team in &bedwars_config.teams {
         match_state
             .teams
-            .insert(team.0.to_string(), TeamStats::default());
+            .insert(team.0.to_string(), TeamState::default());
     }
 
-    for (entity, mut pos, mut inventory, client, mut game_mode, username, team) in
+    for (entity, mut pos, mut inventory, _client, mut game_mode, username, team) in
         players.iter_mut()
     {
         *game_mode = GameMode::Survival;
         inventory.clear();
-        inventory.set_slot(9, ItemStack::new(ItemKind::Dirt, 64, None));
+        inventory.set_slot(9, ItemStack::new(ItemKind::Dirt, 69, None));
         inventory.readonly = false;
 
         let team_spawn = bedwars_config.spawns.get(&team.name).unwrap();

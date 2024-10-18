@@ -44,7 +44,7 @@ fn tick_respawn_timer(
     mut clients: Query<(Entity, &mut Client, &mut RespawnTimer)>,
 ) {
     for (player, mut client, mut timer) in &mut clients {
-        let seconds_left = timer.0.remaining_secs();
+        let _seconds_left = timer.0.remaining_secs();
         timer.0.tick(time.delta());
 
         // client.set_title(format!("Respawn in: {}", seconds_left as u32));

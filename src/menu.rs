@@ -10,14 +10,14 @@ pub struct ItemMenuPlugin;
 impl Plugin for ItemMenuPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, (open_menu, select_menu_item))
-            .add_event::<MenuItemSelect>()
+            .add_event::<MenuItemSelectEvent>()
             .observe(close_by_player)
             .observe(close_menu);
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Event)]
-pub struct MenuItemSelect {
+pub struct MenuItemSelectEvent {
     pub client: Entity,
     pub idx: u16,
     pub click_mode: ClickMode,
@@ -67,7 +67,7 @@ fn close_menu(trigger: Trigger<OnRemove, ItemMenu>, mut commands: Commands) {
 fn select_menu_item(
     mut clients: Query<(Entity, &ItemMenu)>,
     mut events: EventReader<ClickSlotEvent>,
-    mut event_writer: EventWriter<MenuItemSelect>,
+    mut event_writer: EventWriter<MenuItemSelectEvent>,
 ) {
     for event in events.read() {
         let selected_slot = event.slot_id;
@@ -79,7 +79,7 @@ fn select_menu_item(
             continue;
         }
 
-        event_writer.send(MenuItemSelect {
+        event_writer.send(MenuItemSelectEvent {
             client: player,
             idx: selected_slot as u16,
             click_mode: event.mode,

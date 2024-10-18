@@ -122,6 +122,48 @@ impl TeamColor {
         }
     }
 
+    pub fn wool_carpet(&self) -> ItemKind {
+        match self {
+            TeamColor::White => ItemKind::WhiteCarpet,
+            TeamColor::Orange => ItemKind::OrangeCarpet,
+            TeamColor::Magenta => ItemKind::MagentaCarpet,
+            TeamColor::LightBlue => ItemKind::LightBlueCarpet,
+            TeamColor::Yellow => ItemKind::YellowCarpet,
+            TeamColor::Lime => ItemKind::LimeCarpet,
+            TeamColor::Pink => ItemKind::PinkCarpet,
+            TeamColor::Gray => ItemKind::GrayCarpet,
+            TeamColor::LightGray => ItemKind::LightGrayCarpet,
+            TeamColor::Cyan => ItemKind::CyanCarpet,
+            TeamColor::Purple => ItemKind::PurpleCarpet,
+            TeamColor::Blue => ItemKind::BlueCarpet,
+            TeamColor::Brown => ItemKind::BrownCarpet,
+            TeamColor::Green => ItemKind::GreenCarpet,
+            TeamColor::Red => ItemKind::RedCarpet,
+            TeamColor::Black => ItemKind::BlackCarpet,
+        }
+    }
+
+    pub fn bed_block(&self) -> ItemKind {
+        match self {
+            TeamColor::White => ItemKind::WhiteBed,
+            TeamColor::Orange => ItemKind::OrangeBed,
+            TeamColor::Magenta => ItemKind::MagentaBed,
+            TeamColor::LightBlue => ItemKind::LightBlueBed,
+            TeamColor::Yellow => ItemKind::YellowBed,
+            TeamColor::Lime => ItemKind::LimeBed,
+            TeamColor::Pink => ItemKind::PinkBed,
+            TeamColor::Gray => ItemKind::GrayBed,
+            TeamColor::LightGray => ItemKind::LightGrayBed,
+            TeamColor::Cyan => ItemKind::CyanBed,
+            TeamColor::Purple => ItemKind::PurpleBed,
+            TeamColor::Blue => ItemKind::BlueBed,
+            TeamColor::Brown => ItemKind::BrownBed,
+            TeamColor::Green => ItemKind::GreenBed,
+            TeamColor::Red => ItemKind::RedBed,
+            TeamColor::Black => ItemKind::BlackBed,
+        }
+    }
+
     pub fn text_color(&self) -> &'static str {
         match self {
             TeamColor::White => "§f",

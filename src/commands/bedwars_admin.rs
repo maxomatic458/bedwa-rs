@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use ordermap::OrderSet;
 use valence::command::parsers::AbsoluteOrRelative;
 use valence::{command, command_macros, prelude::*};
 
@@ -8,8 +9,9 @@ use command::parsers;
 use command_macros::Command;
 use parsers::Vec3 as Vec3Parser;
 
-use crate::bedwars_config::{BedwarsWIPConfig, Vec3};
+use crate::bedwars_config::{BedwarsWIPConfig, ConfigVec3};
 use crate::colors::TeamColor;
+use crate::utils::item_kind::ItemKindExt;
 
 // TODO: in addition to the commands
 // make this possible via a "edit mode"
@@ -41,18 +43,21 @@ pub enum BedwarsAdminCommand {
     SetTeamBed { team_name: String, pos: Vec3Parser },
     /// Add a shop to the bedwars arena, and optionally bind it to a team
     /// (will only be accessible by that team)
-    #[paths = "shop add {pos} {team?}"]
+    #[paths = "shop add {pos} {yaw} {team?}"]
     AddShop {
         pos: Vec3Parser,
+        yaw: f32,
         team: Option<String>,
     },
     /// Add a resource spawner, and optionally bind it to a team
     /// If bound to a team, resources will stop spawning when the team is eliminated
     /// TODO: resource enum instead of string
-    #[paths = "spawner add {pos} {resource} {team?}"]
+    #[paths = "spawner add {pos} {resource} {interval} {amount} {team?}"]
     AddSpawner {
         pos: Vec3Parser,
         resource: String,
+        interval: f32,
+        amount: u32,
         team: Option<String>,
     },
     /// Remove a shop from the bedwars arena
@@ -85,6 +90,7 @@ pub fn handle_bedwars_admin_command(
     mut entities: Query<(Entity, &Position, &mut Client)>,
     mut events: EventReader<CommandResultEvent<BedwarsAdminCommand>>,
     mut wip_config: ResMut<BedwarsWIPConfig>,
+    mut layer: Query<&mut ChunkLayer>,
 ) {
     for event in events.read() {
         tracing::info!("Bedwars Admin Command");
@@ -92,6 +98,8 @@ pub fn handle_bedwars_admin_command(
 
         let player_pos = *entities.get(caller).unwrap().1;
         let mut player_client = entities.get_mut(caller).unwrap().2;
+
+        let layer = layer.single_mut();
 
         match &event.result {
             BedwarsAdminCommand::SetArenaBounds { pos1, pos2 } => {
@@ -115,19 +123,29 @@ pub fn handle_bedwars_admin_command(
                 pos: bed,
             } => {
                 let pos = absolute_pos(bed, &player_pos);
-                set_team_bed_command(&mut wip_config, player_client, team_name, pos)
+                set_team_bed_command(&mut wip_config, player_client, team_name, layer, pos);
             }
-            BedwarsAdminCommand::AddShop { pos, team } => {
+            BedwarsAdminCommand::AddShop { pos, yaw, team } => {
                 let pos = absolute_pos(pos, &player_pos);
-                add_shop_command(&mut wip_config, player_client, pos, team)
+                add_shop_command(&mut wip_config, player_client, pos, *yaw, team.as_ref())
             }
             BedwarsAdminCommand::AddSpawner {
                 pos,
                 resource,
+                interval,
+                amount,
                 team,
             } => {
                 let pos = absolute_pos(pos, &player_pos);
-                add_spawner_command(&mut wip_config, player_client, pos, resource, team)
+                add_spawner_command(
+                    &mut wip_config,
+                    player_client,
+                    pos,
+                    resource,
+                    *interval,
+                    *amount,
+                    team,
+                )
             }
             BedwarsAdminCommand::RemoveShop { pos } => {
                 let pos = absolute_pos(pos, &player_pos);
@@ -156,8 +174,8 @@ pub fn handle_bedwars_admin_command(
 fn set_arena_bounds_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
-    pos1: Vec3,
-    pos2: Vec3,
+    pos1: ConfigVec3,
+    pos2: ConfigVec3,
 ) {
     player_client.send_chat_message(format!("§aSet arena bounds to §7{} §aand §7{}", pos1, pos2));
     wip_config.bounds = Some((pos1, pos2));
@@ -205,11 +223,11 @@ fn remove_team_command(
 }
 
 /// [`BedwarsAdminCommand::SetTeamSpawn`] command
-fn set_team_spawn_command(
+pub fn set_team_spawn_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
     team_name: &str,
-    spawn: Vec3,
+    spawn: ConfigVec3,
 ) {
     if !wip_config.teams.contains_key(team_name) {
         player_client.send_chat_message("§cTeam does not exist");
@@ -224,27 +242,60 @@ fn set_team_spawn_command(
 }
 
 /// [`BedwarsAdminCommand::SetTeamBed`] command
-fn set_team_bed_command(
+pub fn set_team_bed_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
     team_name: &str,
-    bed: Vec3,
+    layer: Mut<'_, ChunkLayer>,
+    bed: ConfigVec3,
 ) {
     if !wip_config.teams.contains_key(team_name) {
         player_client.send_chat_message("§cTeam does not exist");
         return;
     }
 
+    let mut bed_blocks = OrderSet::new();
+
+    if let Some(block) = layer.block(BlockPos::new(bed.x, bed.y, bed.z)) {
+        if block.state.to_kind().to_item_kind().is_bed() {
+            let neighbors = [
+                BlockPos::new(bed.x + 1, bed.y, bed.z),
+                BlockPos::new(bed.x - 1, bed.y, bed.z),
+                BlockPos::new(bed.x, bed.y, bed.z + 1),
+                BlockPos::new(bed.x, bed.y, bed.z - 1),
+            ];
+
+            for neighbor in neighbors {
+                if let Some(neighbor_block) = layer.block(neighbor) {
+                    if neighbor_block.state.to_kind().to_item_kind().is_bed() {
+                        bed_blocks.insert(ConfigVec3 {
+                            x: neighbor.x,
+                            y: neighbor.y,
+                            z: neighbor.z,
+                        });
+                    }
+                }
+            }
+        } else {
+            player_client
+                .send_chat_message("§cBlock was not detected as bed, if thats the case ignore");
+        }
+    }
+
     player_client.send_chat_message(format!("§aSet bed for team §7{} §ato §7{}", team_name, bed));
-    wip_config.beds.insert(team_name.to_string(), bed);
+
+    bed_blocks.insert(bed);
+
+    wip_config.beds.insert(team_name.to_string(), bed_blocks);
 }
 
 /// [`BedwarsAdminCommand::AddShop`] command
-fn add_shop_command(
+pub fn add_shop_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
-    pos: Vec3,
-    team: &Option<String>,
+    pos: ConfigVec3,
+    yaw: f32,
+    team: Option<&String>,
 ) {
     if let Some(team) = team {
         if !wip_config.teams.contains_key(team) {
@@ -254,15 +305,17 @@ fn add_shop_command(
     }
 
     player_client.send_chat_message(format!("§aAdded shop at §7{}", pos));
-    wip_config.shops.push((pos, team.clone()));
+    wip_config.shops.push(((pos, yaw), team.cloned()));
 }
 
 /// [`BedwarsAdminCommand::AddSpawner`] command
 fn add_spawner_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
-    pos: Vec3,
+    pos: ConfigVec3,
     resource: &str,
+    interval: f32,
+    amount: u32,
     team: &Option<String>,
 ) {
     if let Some(team) = team {
@@ -274,50 +327,56 @@ fn add_spawner_command(
 
     player_client.send_chat_message(format!("§aAdded resource spawner at §7{}", pos));
     // validate resource type
-    if ItemKind::from_str(resource).is_none() {
-        player_client.send_chat_message("§cInvalid resource type");
+    if let Some(resource) = ItemKind::from_str(resource) {
+        wip_config.resource_spawners.push((
+            pos,
+            ItemStack::new(resource, amount as i8, None).into(),
+            interval,
+            team.clone(),
+        ));
         return;
     }
-    wip_config
-        .resource_spawners
-        .push((pos, (resource.to_string(), team.clone())));
+
+    player_client.send_chat_message("§cInvalid resource type");
 }
 
 /// [`BedwarsAdminCommand::RemoveShop`] command
 fn remove_shop_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
-    pos: Vec3,
+    pos: ConfigVec3,
 ) {
     if !wip_config
         .shops
         .iter()
-        .any(|(shop_pos, _)| shop_pos == &pos)
+        .any(|((shop_pos, _), _)| shop_pos == &pos)
     {
         player_client.send_chat_message("§cShop does not exist");
         return;
     }
 
-    wip_config.shops.retain(|(shop_pos, _)| shop_pos != &pos);
+    wip_config
+        .shops
+        .retain(|((shop_pos, _), _)| shop_pos != &pos);
 
     player_client.send_chat_message(format!("§aRemoved shop at §7{}", pos));
 }
 
 /// [`BedwarsAdminCommand::SetLobbySpawn`] command
-fn set_lobby_spawn_command(
+pub fn set_lobby_spawn_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
-    pos: Vec3,
+    pos: ConfigVec3,
 ) {
     player_client.send_chat_message(format!("§aSet lobby spawn to §7{}", pos));
     wip_config.lobby_spawn = Some(pos);
 }
 
 /// [`BedwarsAdminCommand::SetSpectatorSpawn`] command
-fn set_spectator_spawn_command(
+pub fn set_spectator_spawn_command(
     wip_config: &mut BedwarsWIPConfig,
     mut player_client: Mut<'_, Client>,
-    pos: Vec3,
+    pos: ConfigVec3,
 ) {
     player_client.send_chat_message(format!("§aSet spectator spawn to §7{}", pos));
     wip_config.spectator_spawn = Some(pos);
@@ -363,11 +422,11 @@ fn bedwars_summary_command(wip_config: &BedwarsWIPConfig, mut player_client: Mut
     ));
 
     message.push_str(&format!(
-        "§aBeds: {}\n",
+        "§aBeds (or bed blocks): {}\n",
         wip_config
             .beds
             .iter()
-            .map(|(team_name, pos)| format!("§7({}: {})", team_name, pos))
+            .map(|(team_name, pos)| format!("§7({}: {:?})", team_name, pos))
             .collect::<Vec<_>>()
             .join(", ")
     ));
@@ -377,7 +436,7 @@ fn bedwars_summary_command(wip_config: &BedwarsWIPConfig, mut player_client: Mut
         wip_config
             .shops
             .iter()
-            .map(|(pos, team)| format!(
+            .map(|((pos, _), team)| format!(
                 "§7{}: {}",
                 team.as_ref()
                     .map_or("GLOBAL".to_string(), |team| team.clone()),
@@ -392,12 +451,12 @@ fn bedwars_summary_command(wip_config: &BedwarsWIPConfig, mut player_client: Mut
         wip_config
             .resource_spawners
             .iter()
-            .map(|(pos, (resource, team))| format!(
+            .map(|(pos, resource, _interval, team)| format!(
                 "§7{}: {} ({})",
                 team.as_ref()
                     .map_or("GLOBAL".to_string(), |team| team.clone()),
                 pos,
-                resource
+                Into::<ItemStack>::into(resource.clone()).item.to_str()
             ))
             .collect::<Vec<_>>()
             .join(", ")
@@ -429,7 +488,7 @@ fn bedwars_summary_command(wip_config: &BedwarsWIPConfig, mut player_client: Mut
 }
 
 /// [`BedwarsAdminCommand::Help`] command
-fn bedwars_help_command(player_client: Mut<'_, Client>) {
+fn bedwars_help_command(_player_client: Mut<'_, Client>) {
     todo!()
 }
 
@@ -442,13 +501,13 @@ fn bedwars_save_command(wip_config: &BedwarsWIPConfig, mut player_client: Mut<'_
 
     std::fs::write(
         "bedwars_config.json",
-        serde_json::to_string(wip_config).unwrap(),
+        serde_json::to_string_pretty(wip_config).unwrap(),
     )
     .unwrap();
     player_client.send_chat_message("§aBedwars arena saved!");
 }
 
-fn absolute_pos(command_pos: &Vec3Parser, player_pos: &DVec3) -> Vec3 {
+fn absolute_pos(command_pos: &Vec3Parser, player_pos: &DVec3) -> ConfigVec3 {
     let x = match command_pos.x {
         AbsoluteOrRelative::Absolute(x) => x as f64,
         AbsoluteOrRelative::Relative(x) => player_pos.x + x as f64,
@@ -464,9 +523,9 @@ fn absolute_pos(command_pos: &Vec3Parser, player_pos: &DVec3) -> Vec3 {
         AbsoluteOrRelative::Relative(z) => player_pos.z + z as f64,
     };
 
-    Vec3 {
-        x: x as i64,
-        y: y as i64,
-        z: z as i64,
+    ConfigVec3 {
+        x: x as i32,
+        y: y as i32,
+        z: z as i32,
     }
 }

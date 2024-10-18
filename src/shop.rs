@@ -1,28 +1,23 @@
-use std::iter::Sum;
-
 use bevy_ecs::{
     entity::Entity,
     event::EventReader,
     query::{With, Without},
     system::{Commands, Query, Res},
 };
-use bevy_state::state::OnEnter;
+use bevy_state::{prelude::in_state, state::OnEnter};
 use valence::{
-    app::{Plugin, PreUpdate, Update},
-    client::{Client, FlushPacketsSet, Username},
-    entity::{abstract_fireball::Item, player::PlayerEntity, EntityLayerId},
-    prelude::{
-        Component, DetectChangesMut, InteractEntityEvent, IntoSystemConfigs, Inventory,
-        InventoryKind,
-    },
+    app::{Plugin, Update},
+    client::{Client, Username},
+    entity::{player::PlayerEntity, EntityLayerId, HeadYaw, Look},
+    prelude::{Component, InteractEntityEvent, IntoSystemConfigs, Inventory, InventoryKind},
     ChunkLayer, EntityLayer, ItemKind, ItemStack,
 };
 
 use crate::{
     base::death::IsDead,
-    bedwars_config::{BedwarsConfig, ShopConfig, ShopOffer},
-    menu::{ItemMenu, MenuItemSelect},
-    utils::inventory::{self, InventoryExt},
+    bedwars_config::{BedwarsConfig, ShopConfig},
+    menu::{ItemMenu, MenuItemSelectEvent},
+    utils::inventory::InventoryExt,
     GameState, Team,
 };
 
@@ -42,7 +37,10 @@ pub struct ShopPlugin;
 impl Plugin for ShopPlugin {
     fn build(&self, app: &mut valence::prelude::App) {
         app.add_systems(OnEnter(GameState::Match), (init_shops,))
-            .add_systems(Update, (on_shop_click, on_shop_open));
+            .add_systems(
+                Update,
+                (on_shop_click, on_shop_open).run_if(in_state(GameState::Match)),
+            );
     }
 }
 
@@ -54,10 +52,15 @@ fn init_shops(
 ) {
     tracing::debug!("initializing shops");
     let layer = layers.single();
-    for (pos, team) in &bedwars_config.shops {
+    for ((pos, yaw), team) in &bedwars_config.shops {
+        // TODO: why use villager as entity ?
         let mut entity_commands = commands.spawn(valence::entity::villager::VillagerEntityBundle {
             layer: EntityLayerId(layer),
-            position: valence::entity::Position(pos.clone().into()),
+            position: valence::entity::Position(
+                [pos.x as f64 + 0.5, pos.y as f64, pos.z as f64 + 0.5].into(),
+            ),
+            head_yaw: HeadYaw(*yaw),
+            look: Look::new(*yaw, 0.0),
             ..Default::default()
         });
 
@@ -121,7 +124,7 @@ fn on_shop_click(
         &Team,
         &ItemMenu,
     )>,
-    mut events: EventReader<MenuItemSelect>,
+    mut events: EventReader<MenuItemSelectEvent>,
     shop_config: Res<ShopConfig>,
     bedwars_config: Res<BedwarsConfig>,
 ) {

@@ -1,19 +1,24 @@
 use action::{DiggingEvent, DiggingState};
 use app::{App, Plugin, Update};
+use bevy_state::prelude::in_state;
+use client::Username;
 use entity::{
     entity::NoGravity,
     item::{ItemEntityBundle, Stack},
     EntityLayerId, Position, Velocity,
 };
 use math::{DVec3, Vec3};
-use prelude::{Commands, Entity, EventReader, Query, Res};
+use prelude::{Commands, Entity, EventReader, IntoSystemConfigs, Query, Res, ResMut};
 use rand::Rng;
 use valence::*;
 
-use crate::utils::{block_state::BlockStateExt, despawn_timer::DespawnTimer};
+use crate::{
+    bedwars_config::BedwarsConfig, r#match::MatchState, utils::despawn_timer::DespawnTimer,
+    GameState, Team,
+};
 
 use super::{build::PlayerPlacedBlocks, drop_items::DroppedItemsPickupTimer};
-
+use crate::utils::item_kind::ItemKindExt;
 /// Strength of random velocity applied to the dropped item after breaking a block
 const BLOCK_BREAK_DROP_STRENGTH: f32 = 0.05 * 20.0;
 
@@ -21,15 +26,18 @@ pub struct BlockBreakPlugin;
 
 impl Plugin for BlockBreakPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (break_blocks,));
+        app.add_systems(Update, (break_blocks,).run_if(in_state(GameState::Match)));
     }
 }
 
 fn break_blocks(
     mut commands: Commands,
+    clients: Query<(&Username, &Team)>,
     mut events: EventReader<DiggingEvent>,
     mut layer: Query<(Entity, &mut ChunkLayer)>,
     player_placed_blocks: Res<PlayerPlacedBlocks>,
+    bedwars_config: Res<BedwarsConfig>,
+    mut match_state: ResMut<MatchState>,
 ) {
     let (layer, mut layer_mut) = layer.single_mut();
 
@@ -39,8 +47,35 @@ fn break_blocks(
         }
 
         let block_pos = event.position;
+
+        let Ok((_player_name, player_team)) = clients.get(event.client) else {
+            continue;
+        };
+
+        for (team_name, bed_block_set) in &bedwars_config.beds {
+            if *team_name == player_team.name {
+                continue;
+            }
+
+            let block_pos_vec = crate::bedwars_config::ConfigVec3 {
+                x: block_pos.x,
+                y: block_pos.y,
+                z: block_pos.z,
+            };
+
+            if bed_block_set.contains(&block_pos_vec) {
+                // set bed to broken
+                for block in bed_block_set {
+                    layer_mut.set_block(BlockPos::new(block.x, block.y, block.z), BlockState::AIR);
+                }
+
+                let team_state = match_state.teams.get_mut(team_name).unwrap();
+                team_state.bed_destroyed = true;
+            }
+        }
+
         if let Some(block_state) = player_placed_blocks.0.get(&block_pos) {
-            if block_state.is_bed() {
+            if block_state.to_kind().to_item_kind().is_bed() {
                 // extra logic for breaking beds
             } else {
                 // we want to drop the item

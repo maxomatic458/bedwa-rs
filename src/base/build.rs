@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 
+use bevy_state::prelude::in_state;
 use valence::{
     entity::living::LivingEntity, interact_block::InteractBlockEvent, inventory::HeldItem,
     math::Aabb, prelude::*,
 };
 
-use crate::bedwars_config;
+use crate::GameState;
 
 pub struct BuildPlugin;
 
@@ -14,7 +15,7 @@ pub struct PlayerPlacedBlocks(pub HashMap<BlockPos, BlockState>);
 
 impl Plugin for BuildPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (place_blocks,))
+        app.add_systems(Update, (place_blocks,).run_if(in_state(GameState::Match)))
             .insert_resource(PlayerPlacedBlocks::default());
     }
 }
@@ -24,11 +25,9 @@ fn place_blocks(
     entities: Query<&Hitbox, With<LivingEntity>>,
     mut layers: Query<&mut ChunkLayer>,
     mut events: EventReader<InteractBlockEvent>,
-    bedwars_config: Res<bedwars_config::BedwarsConfig>,
+    // bedwars_config: Res<bedwars_config::BedwarsConfig>,
     mut player_placed_blocks: ResMut<PlayerPlacedBlocks>,
 ) {
-    let mut layer = layers.single_mut();
-
     for event in events.read() {
         let Ok((mut inventory, held)) = clients.get_mut(event.client) else {
             continue;
@@ -38,6 +37,7 @@ fn place_blocks(
             continue;
         }
 
+        let mut layer = layers.single_mut();
         // get the held item
         let slot_id = held.slot();
         let stack = inventory.slot(slot_id);

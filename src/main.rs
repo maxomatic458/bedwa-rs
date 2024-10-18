@@ -7,22 +7,21 @@ use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
 use colors::TeamColor;
 use commands::bedwars_admin::{handle_bedwars_admin_command, BedwarsAdminCommand};
+use edit::EditPlugin;
 use lobby::LobbyPlugin;
 use menu::ItemMenuPlugin;
 use r#match::MatchPlugin;
+use resource_spawners::ResourceSpawnerPlugin;
 // use resource_spawners::ResourceSpawnerPlugin;
 use shop::ShopPlugin;
 use utils::despawn_timer::DespawnTimerPlugin;
-use valence::{
-    anvil::AnvilLevel,
-    command::{scopes::CommandScopes, AddCommand},
-    prelude::*,
-};
+use valence::{anvil::AnvilLevel, command::AddCommand, prelude::*};
 
 pub mod base;
 pub mod bedwars_config;
 pub mod colors;
 pub mod commands;
+pub mod edit;
 pub mod lobby;
 pub mod r#match;
 pub mod menu;
@@ -36,6 +35,11 @@ pub struct LobbyPlayer;
 /// A component that will be attached to players spectating a match
 #[derive(Debug, Default, Component)]
 pub struct SpectatorPlayer;
+
+/// A component that will be attached to players that are editing the map
+#[derive(Debug, Default, Component)]
+pub struct Editor;
+
 /// A component that will be attached to players in a match
 #[derive(Debug, Component)]
 pub struct Team {
@@ -48,7 +52,8 @@ enum GameState {
     #[default]
     Lobby,
     Match,
-    PostMatch,
+    // PostMatch,
+    Edit,
 }
 
 /// The time the last tick took
@@ -60,6 +65,7 @@ fn main() {
 
     App::new()
         .add_plugins(StatesPlugin)
+        .add_plugins(EditPlugin)
         .add_plugins(VoidDeathPlugin)
         .add_plugins(DeathPlugin)
         .add_plugins(TimePlugin)
@@ -76,7 +82,7 @@ fn main() {
         // .add_plugins(ItemEntityPlugin)
         .add_plugins(DespawnTimerPlugin)
         .add_plugins(ItemDropPlugin)
-        // .add_plugins(ResourceSpawnerPlugin)
+        .add_plugins(ResourceSpawnerPlugin)
         .add_plugins(CombatPlugin)
         .add_systems(Startup, setup)
         .add_systems(
@@ -97,6 +103,7 @@ fn setup(
     server: Res<Server>,
     biomes: Res<BiomeRegistry>,
     dimensions: Res<DimensionTypeRegistry>,
+    mut state: ResMut<NextState<GameState>>,
 ) {
     let layer = LayerBundle::new(ident!("overworld"), &dimensions, &biomes, &server);
 
@@ -119,7 +126,8 @@ fn setup(
             commands.insert_resource(config.clone());
             bedwars_config::BedwarsWIPConfig::from_saved_config(&config)
         } else {
-            tracing::warn!("No bedwars config found, using default");
+            tracing::warn!("No bedwars config found, enabling edit mode");
+            state.set(GameState::Edit);
             bedwars_config::BedwarsWIPConfig::default()
         }
     };
@@ -145,51 +153,39 @@ fn init_clients(
             &mut EntityLayerId,
             &mut VisibleChunkLayer,
             &mut VisibleEntityLayers,
-            &mut CommandScopes,
-            &mut Position,
-            &mut GameMode,
-            &mut Client,
         ),
         Added<Client>,
     >,
     layers: Query<Entity, (With<ChunkLayer>, With<EntityLayer>)>,
-    bedwars_config: Option<Res<bedwars_config::BedwarsConfig>>,
+    // bedwars_config: Option<Res<bedwars_config::BedwarsConfig>>,
     state: Res<State<GameState>>,
 ) {
     let layer = layers.single();
-    for (
-        entity,
-        mut layer_id,
-        mut visible_chunk_layer,
-        mut visible_entity_layers,
-        mut scopes,
-        mut pos,
-        mut game_mode,
-        mut client,
-    ) in &mut clients
-    {
+    for (entity, mut layer_id, mut visible_chunk_layer, mut visible_entity_layers) in &mut clients {
         layer_id.0 = layer;
         visible_chunk_layer.0 = layer;
         visible_entity_layers.0.insert(layer);
 
-        if let Some(ref config) = bedwars_config {
-            match state.get() {
-                GameState::Lobby => {
-                    commands.entity(entity).insert(LobbyPlayer);
-                }
-                GameState::Match => {
-                    commands.entity(entity).insert(SpectatorPlayer);
-                }
-                _ => {}
-            };
-        } else {
-            pos.set([0.5, 128.0, 0.5]);
-            *game_mode = GameMode::Creative;
-            scopes.add("bedwars.command.bw-admin");
-            client.send_chat_message(
-                "§cThe bedwars config is not loaded, you are currently in the edit mode.",
-            );
-        }
+        // if let Some(ref config) = bedwars_config {
+        match state.get() {
+            GameState::Lobby => {
+                commands.entity(entity).insert(LobbyPlayer);
+            }
+            GameState::Match => {
+                commands.entity(entity).insert(SpectatorPlayer);
+            }
+            GameState::Edit => {
+                commands.entity(entity).insert(Editor);
+            } // _ => {}
+        };
+        // } else {
+        //     pos.set([0.5, 128.0, 0.5]);
+        //     *game_mode = GameMode::Creative;
+        //     scopes.add("bedwars.command.bw-admin");
+        //     client.send_chat_message(
+        //         "§cThe bedwars config is not loaded, you are currently in the edit mode.",
+        //     );
+        // }
     }
 }
 

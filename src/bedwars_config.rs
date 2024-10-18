@@ -1,5 +1,5 @@
 use crate::colors::TeamColor;
-use ordermap::OrderMap;
+use ordermap::{OrderMap, OrderSet};
 use serde::{Deserialize, Serialize};
 use valence::math::DVec3;
 use valence::nbt::Compound;
@@ -7,21 +7,43 @@ use valence::prelude::Resource;
 use valence::{ItemKind, ItemStack};
 
 #[derive(Debug, Serialize, Deserialize, Hash, PartialEq, Eq, Clone)]
-pub struct Vec3 {
-    pub x: i64,
-    pub y: i64,
-    pub z: i64,
+pub struct ConfigVec3 {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
-impl std::fmt::Display for Vec3 {
+impl ConfigVec3 {
+    pub fn new(x: i32, y: i32, z: i32) -> Self {
+        Self { x, y, z }
+    }
+
+    pub fn up() -> Self {
+        Self::new(0, 1, 0)
+    }
+}
+
+impl std::fmt::Display for ConfigVec3 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
 
-impl From<Vec3> for DVec3 {
-    fn from(val: Vec3) -> Self {
+impl From<ConfigVec3> for DVec3 {
+    fn from(val: ConfigVec3) -> Self {
         DVec3::new(val.x as f64, val.y as f64, val.z as f64)
+    }
+}
+
+impl std::ops::Add for ConfigVec3 {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
     }
 }
 
@@ -32,21 +54,21 @@ impl From<Vec3> for DVec3 {
 #[derive(Debug, Serialize, Deserialize, Resource, Clone)]
 pub struct BedwarsConfig {
     /// Bounds of the bedwars arena
-    pub bounds: (Vec3, Vec3),
+    pub bounds: (ConfigVec3, ConfigVec3),
     /// Team name -> team color
     pub teams: OrderMap<String, TeamColor>,
     /// Team name -> spawn point
-    pub spawns: OrderMap<String, Vec3>,
+    pub spawns: OrderMap<String, ConfigVec3>,
     /// Team name -> bed location
-    pub beds: OrderMap<String, Vec3>,
-    /// Shop location ->? team name
-    pub shops: Vec<(Vec3, Option<String>)>,
-    /// Resource spawner location -> (resource type, team name)
-    pub resource_spawners: Vec<(Vec3, (String, Option<String>))>,
+    pub beds: OrderMap<String, OrderSet<ConfigVec3>>,
+    /// Shop location, yaw ->? team name
+    pub shops: Vec<((ConfigVec3, f32), Option<String>)>,
+    /// Resource spawner location -> (resource type, spawn interval secs, team name)
+    pub resource_spawners: Vec<(ConfigVec3, SerItemStack, f32, Option<String>)>,
     /// Lobby spawn point
-    pub lobby_spawn: Vec3,
+    pub lobby_spawn: ConfigVec3,
     /// Spectator spawn point
-    pub spectator_spawn: Vec3,
+    pub spectator_spawn: ConfigVec3,
 }
 
 /// Represents a WIP bedwars config, which will be changed
@@ -54,21 +76,21 @@ pub struct BedwarsConfig {
 #[derive(Debug, Serialize, Deserialize, Default, Resource)]
 pub struct BedwarsWIPConfig {
     /// Bounds of the bedwars arena
-    pub bounds: Option<(Vec3, Vec3)>,
+    pub bounds: Option<(ConfigVec3, ConfigVec3)>,
     /// Team name -> team color
     pub teams: OrderMap<String, TeamColor>,
     /// Team name -> spawn point
-    pub spawns: OrderMap<String, Vec3>,
+    pub spawns: OrderMap<String, ConfigVec3>,
     /// Team name -> bed location
-    pub beds: OrderMap<String, Vec3>,
-    /// Shop location ->? team name
-    pub shops: Vec<(Vec3, Option<String>)>,
-    /// Resource spawner location -> (resource type, team name)
-    pub resource_spawners: Vec<(Vec3, (String, Option<String>))>,
+    pub beds: OrderMap<String, OrderSet<ConfigVec3>>,
+    /// Shop location, yaw ->? team name
+    pub shops: Vec<((ConfigVec3, f32), Option<String>)>,
+    /// Resource spawner location -> (resource type, spawn interval secs, team name)
+    pub resource_spawners: Vec<(ConfigVec3, SerItemStack, f32, Option<String>)>,
     /// Lobby spawn point
-    pub lobby_spawn: Option<Vec3>,
+    pub lobby_spawn: Option<ConfigVec3>,
     /// Spectator spawn point
-    pub spectator_spawn: Option<Vec3>,
+    pub spectator_spawn: Option<ConfigVec3>,
 }
 
 impl BedwarsWIPConfig {

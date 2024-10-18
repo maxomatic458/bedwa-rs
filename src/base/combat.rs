@@ -1,12 +1,12 @@
 use bevy_ecs::query::QueryData;
 use valence::{
     entity::{living::Health, EntityId, EntityStatuses},
-    inventory::{player_inventory::PlayerInventory, HeldItem},
+    inventory::HeldItem,
     prelude::*,
     protocol::{packets::play::EntityDamageS2c, sound::SoundCategory, Sound, WritePacket},
 };
 
-use crate::utils::item_kind::ItemStackExt;
+use crate::utils::item_stack::ItemStackExt;
 
 use super::{death::IsDead, fall_damage::FallingState};
 
@@ -49,7 +49,6 @@ struct CombatQuery {
 }
 
 fn combat_system(
-    commands: Commands,
     mut all_clients: Query<&mut Client>,
     mut clients: Query<CombatQuery, Without<IsDead>>,
     mut sprinting: EventReader<SprintEvent>,
