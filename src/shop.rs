@@ -146,7 +146,11 @@ fn on_shop_click(
             continue;
         };
 
-        let Ok(mut menu_inventory) = inventories.get_mut(item_menu.inventory_ent().unwrap()) else {
+        let Some(inventory_ent) = item_menu.inventory_ent() else {
+            continue;
+        };
+
+        let Ok(mut menu_inventory) = inventories.get_mut(inventory_ent) else {
             continue;
         };
 

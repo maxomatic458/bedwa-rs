@@ -1,8 +1,8 @@
 use base::{
-    break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin,
-    death::DeathPlugin, drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin,
-    item_pickup::ItemPickupPlugin, regeneration::RegenerationPlugin, scoreboard::ScoreboardPlugin,
-    void_death::VoidDeathPlugin,
+    armor_right_click_equip::ArmorRightClickEquipPlugin, break_blocks::BlockBreakPlugin,
+    build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin, death::DeathPlugin,
+    drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin, item_pickup::ItemPickupPlugin,
+    regeneration::RegenerationPlugin, scoreboard::ScoreboardPlugin, void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -95,6 +95,7 @@ fn main() {
         .add_plugins(ItemDropPlugin)
         .add_plugins(ResourceSpawnerPlugin)
         .add_plugins(CombatPlugin)
+        .add_plugins(ArmorRightClickEquipPlugin)
         .add_systems(Startup, setup)
         .add_systems(
             Update,

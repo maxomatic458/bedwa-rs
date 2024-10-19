@@ -1,4 +1,4 @@
-use valence::{prelude::Equipment, ItemKind, ItemStack};
+use valence::{prelude::Equipment, protocol::Sound, ItemKind, ItemStack};
 
 use super::enchantments::{protection_reduction, Enchantment, ItemStackExtEnchantments};
 
@@ -7,6 +7,18 @@ pub trait ItemKindExtArmor {
     fn armor_points(&self) -> f32;
     /// The toughness of that item
     fn toughness(&self) -> f32;
+    /// Whether the item is a helmet
+    fn is_helmet(&self) -> bool;
+    /// Whether the item is a chestplate
+    fn is_chestplate(&self) -> bool;
+    /// Whether the item is leggings
+    fn is_leggings(&self) -> bool;
+    /// Whether the item is boots
+    fn is_boots(&self) -> bool;
+    /// Whether the item is armor
+    fn is_armor(&self) -> bool;
+    /// The sound when the item is equipped
+    fn equip_sound(&self) -> Option<Sound>;
 }
 
 impl ItemKindExtArmor for ItemKind {
@@ -57,6 +69,88 @@ impl ItemKindExtArmor for ItemKind {
             ItemKind::NetheriteLeggings => 3.0,
             ItemKind::NetheriteBoots => 3.0,
             _ => 0.0,
+        }
+    }
+
+    fn is_helmet(&self) -> bool {
+        matches!(
+            self,
+            ItemKind::LeatherHelmet
+                | ItemKind::ChainmailHelmet
+                | ItemKind::IronHelmet
+                | ItemKind::GoldenHelmet
+                | ItemKind::DiamondHelmet
+                | ItemKind::NetheriteHelmet
+        )
+    }
+
+    fn is_chestplate(&self) -> bool {
+        matches!(
+            self,
+            ItemKind::LeatherChestplate
+                | ItemKind::ChainmailChestplate
+                | ItemKind::IronChestplate
+                | ItemKind::GoldenChestplate
+                | ItemKind::DiamondChestplate
+                | ItemKind::NetheriteChestplate
+        )
+    }
+
+    fn is_leggings(&self) -> bool {
+        matches!(
+            self,
+            ItemKind::LeatherLeggings
+                | ItemKind::ChainmailLeggings
+                | ItemKind::IronLeggings
+                | ItemKind::GoldenLeggings
+                | ItemKind::DiamondLeggings
+                | ItemKind::NetheriteLeggings
+        )
+    }
+
+    fn is_boots(&self) -> bool {
+        matches!(
+            self,
+            ItemKind::LeatherBoots
+                | ItemKind::ChainmailBoots
+                | ItemKind::IronBoots
+                | ItemKind::GoldenBoots
+                | ItemKind::DiamondBoots
+                | ItemKind::NetheriteBoots
+        )
+    }
+
+    fn is_armor(&self) -> bool {
+        self.is_helmet() || self.is_chestplate() || self.is_leggings() || self.is_boots()
+    }
+
+    fn equip_sound(&self) -> Option<Sound> {
+        match self {
+            ItemKind::LeatherBoots
+            | ItemKind::LeatherChestplate
+            | ItemKind::LeatherHelmet
+            | ItemKind::LeatherLeggings => Some(Sound::ItemArmorEquipLeather),
+            ItemKind::ChainmailBoots
+            | ItemKind::ChainmailChestplate
+            | ItemKind::ChainmailHelmet
+            | ItemKind::ChainmailLeggings => Some(Sound::ItemArmorEquipChain),
+            ItemKind::IronBoots
+            | ItemKind::IronChestplate
+            | ItemKind::IronHelmet
+            | ItemKind::IronLeggings => Some(Sound::ItemArmorEquipIron),
+            ItemKind::GoldenBoots
+            | ItemKind::GoldenChestplate
+            | ItemKind::GoldenHelmet
+            | ItemKind::GoldenLeggings => Some(Sound::ItemArmorEquipGold),
+            ItemKind::DiamondBoots
+            | ItemKind::DiamondChestplate
+            | ItemKind::DiamondHelmet
+            | ItemKind::DiamondLeggings => Some(Sound::ItemArmorEquipDiamond),
+            ItemKind::NetheriteBoots
+            | ItemKind::NetheriteChestplate
+            | ItemKind::NetheriteHelmet
+            | ItemKind::NetheriteLeggings => Some(Sound::ItemArmorEquipNetherite),
+            _ => None,
         }
     }
 }

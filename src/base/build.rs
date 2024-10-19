@@ -15,8 +15,11 @@ pub struct PlayerPlacedBlocks(pub HashMap<BlockPos, BlockState>);
 
 impl Plugin for BuildPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (place_blocks,).run_if(in_state(GameState::Match)))
-            .insert_resource(PlayerPlacedBlocks::default());
+        app.add_systems(
+            FixedPreUpdate,
+            (place_blocks,).run_if(in_state(GameState::Match)),
+        )
+        .insert_resource(PlayerPlacedBlocks::default());
     }
 }
 

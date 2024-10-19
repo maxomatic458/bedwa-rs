@@ -6,7 +6,7 @@ use valence::{
     prelude::*,
 };
 
-use crate::{utils::item_stack::ItemStackExtWeapons, GameState};
+use crate::{utils::item_stack::ItemStackExtWeapons, GameState, Team};
 
 use super::{
     armor::EquipmentExtDamageReduction,
@@ -21,6 +21,8 @@ const KNOCKBACK_DEFAULT_Y: f32 = 6.432;
 const KNOCKBACK_SPEED_XY: f32 = 18.0;
 const KNOCKBACK_SPEED_Y: f32 = 8.432;
 const CRIT_MULTIPLIER: f32 = 1.5;
+
+const FRIENLDY_FIRE: bool = false;
 
 /// Attached to every client.
 #[derive(Component, Default)]
@@ -47,7 +49,6 @@ impl Plugin for CombatPlugin {
 struct CombatQuery {
     client: &'static mut Client,
     entity_id: &'static EntityId,
-    // health: &'static mut Health,
     pos: &'static Position,
     state: &'static mut CombatState,
     statuses: &'static mut EntityStatuses,
@@ -55,6 +56,7 @@ struct CombatQuery {
     held_item: &'static HeldItem,
     falling_state: &'static FallingState,
     equipment: &'static Equipment,
+    team: &'static Team,
     entity: Entity,
 }
 
@@ -86,6 +88,11 @@ fn combat_system(
         else {
             continue;
         };
+
+        if attacker.team == victim.team && !FRIENLDY_FIRE {
+            continue;
+        }
+
         if attacker.state.last_attacked_tick + ATTACK_COOLDOWN_TICKS >= server.current_tick() {
             continue;
         }
@@ -110,7 +117,7 @@ fn combat_system(
         let mut knockback_vec = Vec3::new(dir.x * xz_knockback, y_knockback, dir.z * xz_knockback);
         let attack_weapon = attacker.inventory.slot(attacker.held_item.slot());
 
-        knockback_vec += attack_weapon.knockback_extra();
+        knockback_vec += attack_weapon.knockback_extra() * dir;
 
         victim.client.set_velocity(knockback_vec);
 

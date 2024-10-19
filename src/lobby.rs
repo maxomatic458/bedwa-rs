@@ -14,7 +14,7 @@ use valence::{
     entity::{living::Health, Position},
     interact_item::InteractItemEvent,
     inventory::HeldItem,
-    nbt::Compound,
+    nbt::{compound, Compound},
     prelude::{Component, IntoSystemConfigs, Inventory, InventoryKind},
     protocol::{sound::SoundCategory, Sound},
     title::SetTitle,
@@ -121,11 +121,23 @@ fn open_team_selection_menu(
 ) {
     let mut inv = Inventory::new(InventoryKind::Generic9x1);
     // TODO: set item name to team name
-    for (_team_name, color) in &bedwars_config.teams {
+    for (team_name, color) in &bedwars_config.teams {
         let next_slot = inv.first_empty_slot().unwrap();
 
         let team_block = color.wool_block();
-        let item_stack = ItemStack::new(team_block, 1, None);
+        let item_stack = ItemStack::new(
+            team_block,
+            1,
+            Some(compound! {
+                "display" => compound! {
+                    "Name" => format!(
+                        "{{\"text\":\"{}{}\", \"italic\": \"false\"}}'}}",
+                        color.text_color(),
+                        team_name,
+                    )
+                }
+            }),
+        );
         inv.set_slot(next_slot, item_stack);
     }
 
@@ -133,16 +145,22 @@ fn open_team_selection_menu(
     commands.entity(player_ent).insert(menu);
 }
 
+#[allow(clippy::type_complexity)]
 fn on_team_select(
     mut commands: Commands,
-    mut clients: Query<(Entity, &Position, &mut Client, &Username), With<LobbyPlayer>>,
+    mut clients: Query<
+        (Entity, &Position, &mut Client, &Username, Option<&Team>),
+        With<LobbyPlayer>,
+    >,
     mut events: EventReader<MenuItemSelectEvent>,
     mut lobby_state: ResMut<LobbyPlayerState>,
     mut state: ResMut<NextState<GameState>>,
     bedwars_config: Res<BedwarsConfig>,
 ) {
     for event in events.read() {
-        let Ok((player_ent, position, mut client, username)) = clients.get_mut(event.client) else {
+        let Ok((player_ent, position, mut client, username, switched_from)) =
+            clients.get_mut(event.client)
+        else {
             continue;
         };
         let selected_slot = event.idx;
@@ -169,13 +187,15 @@ fn on_team_select(
             tracing::info!("Player {} selected team {}", username, team);
 
             lobby_state.players.insert(username.0.clone(), team.clone());
-            lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
+            if switched_from.is_none() {
+                lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
+            }
 
             tracing::warn!("players without team: {}", lobby_state.without_team);
 
             if lobby_state.without_team == 0 {
                 tracing::info!("setting state to match");
-                for (player, _, _, _) in clients.iter() {
+                for (player, _, _, _, _) in clients.iter() {
                     commands.entity(player).remove::<LobbyPlayer>();
                 }
 

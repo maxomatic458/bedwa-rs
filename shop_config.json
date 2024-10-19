@@ -6,7 +6,7 @@
         "count": 1,
         "nbt": {
           "display": {
-            "Name": "{\"text\":\"TEST\", \"italic\": \"false\"}'}}"
+            "Name": "{\"text\":\"Blocks\", \"italic\": \"false\"}'}}"
           }
         }
       },
@@ -15,11 +15,273 @@
           "offer": {
             "item": "white_wool",
             "count": 4,
-            "nbt": null
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"1 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+              }
+            }
           },
           "price": {
-            "item": "dirt",
+            "item": "brick",
             "count": 1,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "oak_planks",
+            "count": 4,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"3 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 3,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "end_stone",
+            "count": 4,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"1 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "iron_ingot",
+            "count": 1,
+            "nbt": null
+          }
+        }
+      ]
+    ],
+    "Armor": [
+      {
+        "item": "iron_chestplate",
+        "count": 1,
+        "nbt": {
+          "display": {
+            "Name": "{\"text\":\"Weapons\", \"italic\": \"false\"}'}}"
+          }
+        }
+      },
+      [
+        {
+          "offer": {
+            "item": "leather_boots",
+            "count": 1,
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:protection",
+                  "lvl": 2
+                }
+              ],
+              "display": {
+                "Lore": [
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 2,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "leather_leggings",
+            "count": 1,
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:protection",
+                  "lvl": 2
+                }
+              ],
+              "display": {
+                "Lore": [
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+
+              }
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 2,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "chainmail_chestplate",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"5 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 5,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "leather_helmet",
+            "count": 1,
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:protection",
+                  "lvl": 2
+                }
+              ],
+              "display": {
+                "Lore": [
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+
+              }
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 2,
+            "nbt": null
+          }
+        }
+      ]
+    ],
+    "Tools": [
+      {
+        "item": "iron_pickaxe",
+        "count": 1,
+        "nbt": {
+          "display": {
+            "Name": "{\"text\":\"Tools\", \"italic\": \"false\"}'}}"
+          }
+        }
+      },
+      [
+        {
+          "offer": {
+            "item": "shears",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"10 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 10,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "shears",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"8 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
+                ]
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:efficiency",
+                  "lvl": 3
+                }
+              ]
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 8,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "stone_pickaxe",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"5 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 5,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "iron_pickaxe",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                ]
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:efficiency",
+                  "lvl": 2
+                }
+              ]
+            }
+          },
+          "price": {
+            "item": "iron_ingot",
+            "count": 5,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "golden_pickaxe",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"5 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 5,
             "nbt": null
           }
         }
@@ -38,9 +300,56 @@
       [
         {
           "offer": {
-            "item": "stone_sword",
+            "item": "stick",
             "count": 1,
             "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                ]
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:knockback",
+                  "lvl": 3
+                }
+              ]
+            }
+          },
+          "price": {
+            "item": "brick",
+            "count": 2,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "golden_sword",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"1 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "iron_ingot",
+            "count": 1,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "golden_sword",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                ]
+              },
               "Enchantments": [
                 {
                   "id": "minecraft:sharpness",
@@ -50,39 +359,81 @@
             }
           },
           "price": {
-            "item": "dirt",
-            "count": 1,
+            "item": "iron_ingot",
+            "count": 3,
             "nbt": null
           }
         },
         {
           "offer": {
-            "item": "wooden_sword",
-            "count": 1,
-            "nbt": null
-          },
-          "price": {
-            "item": "dirt",
-            "count": 1,
-            "nbt": null
-          }
-        },
-        {
-          "offer": {
-            "item": "leather_helmet",
+            "item": "iron_sword",
             "count": 1,
             "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"5 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
+                ]
+              },
               "Enchantments": [
                 {
-                  "id": "minecraft:protection",
-                  "lvl": 4
+                  "id": "minecraft:sharpness",
+                  "lvl": 2
                 }
               ]
             }
           },
           "price": {
-            "item": "dirt",
+            "item": "gold_ingot",
+            "count": 5,
+            "nbt": null
+          }
+        }
+      ]
+    ],
+    "Bows": [
+      {
+        "item": "bow",
+        "count": 1,
+        "nbt": {
+          "display": {
+            "Name": "{\"text\":\"Bows\", \"italic\": \"false\"}'}}"
+          }
+        }
+      },
+      [
+        {
+          "offer": {
+            "item": "arrow",
+            "count": 3,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "iron_ingot",
+            "count": 5,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "bow",
             "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"4 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 4,
             "nbt": null
           }
         }

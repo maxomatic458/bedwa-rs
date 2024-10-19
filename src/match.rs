@@ -110,7 +110,7 @@ fn start_match(
     {
         *game_mode = GameMode::Survival;
         inventory.clear();
-        inventory.readonly = true;
+        inventory.readonly = false;
 
         let team_spawn = bedwars_config.spawns.get(&team.name).unwrap();
         pos.set(team_spawn.clone());
@@ -180,9 +180,11 @@ fn on_player_death(
         };
 
         let victim_team_state = match_state.teams.get_mut(&victim_team.name).unwrap();
-        victim_team_state
-            .players_alive
-            .retain(|p| p != &victim_name.0);
+        if victim_team_state.bed_destroyed {
+            victim_team_state
+                .players_alive
+                .retain(|p| p != &victim_name.0);
+        }
 
         let victim_stats = match_state.player_stats.get_mut(&victim_name.0).unwrap();
         victim_stats.deaths += 1;

@@ -45,9 +45,8 @@ fn break_blocks(
     // match_state: ResMut<MatchState>,
     mut event_writer: EventWriter<BedDestroyedEvent>,
 ) {
-    let (layer, mut layer_mut) = layer.single_mut();
-
     for event in events.read() {
+        let (layer, mut layer_mut) = layer.single_mut();
         if event.state != DiggingState::Stop {
             continue;
         }

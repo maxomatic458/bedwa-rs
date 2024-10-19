@@ -6,6 +6,7 @@ pub mod drop_items;
 
 // pub mod equipper;
 pub mod armor;
+pub mod armor_right_click_equip;
 pub mod chat;
 pub mod enchantments;
 pub mod fall_damage;
