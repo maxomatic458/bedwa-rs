@@ -198,7 +198,12 @@ fn on_shop_click(
                         let price = item_to_buy.price.clone().into();
                         let offer: ItemStack = item_to_buy.offer.clone().into();
                         // Convert to team color
-                        let offer = team_color.to_team_item_stack(offer);
+                        let mut offer = team_color.to_team_item_stack(offer);
+
+                        if let Some(ref mut nbt) = offer.nbt {
+                            // Remove lore from item when bought
+                            nbt.remove("Lore");
+                        }
 
                         let mut bought = false;
                         if inventory.try_remove_all(&price) {
@@ -211,7 +216,6 @@ fn on_shop_click(
                         }
 
                         if bought {
-                            // TODO success sound
                             client.play_sound(
                                 Sound::BlockNoteBlockBell,
                                 SoundCategory::Master,
@@ -220,7 +224,6 @@ fn on_shop_click(
                                 1.8,
                             );
                         } else {
-                            // TODO: error sound
                             client.play_sound(
                                 Sound::BlockNoteBlockBass,
                                 SoundCategory::Master,
