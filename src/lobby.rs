@@ -91,9 +91,6 @@ fn init_lobby_player(
         let no_team_selected_item = ItemStack::new(NO_TEAM_SELECTED_ITEM, 1, None);
         inventory.set_slot(40, no_team_selected_item);
 
-        let stack_of_stone = ItemStack::new(ItemKind::Dirt, 64, None);
-        inventory.set_slot(41, stack_of_stone);
-
         // commands.entity(player).insert(CombatState::default());
 
         lobby_state.without_team += 1;

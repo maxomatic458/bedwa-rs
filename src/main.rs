@@ -1,7 +1,8 @@
 use base::{
     break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin,
     death::DeathPlugin, drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin,
-    item_pickup::ItemPickupPlugin, scoreboard::ScoreboardPlugin, void_death::VoidDeathPlugin,
+    item_pickup::ItemPickupPlugin, regeneration::RegenerationPlugin, scoreboard::ScoreboardPlugin,
+    void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -88,6 +89,7 @@ fn main() {
         .add_plugins(MatchPlugin)
         .add_plugins(ShopPlugin)
         .add_plugins(ItemPickupPlugin)
+        .add_plugins(RegenerationPlugin)
         // .add_plugins(ItemEntityPlugin)
         .add_plugins(DespawnTimerPlugin)
         .add_plugins(ItemDropPlugin)
@@ -119,16 +121,6 @@ fn setup(
     let level = AnvilLevel::new("world", &biomes);
 
     commands.spawn((layer, level));
-
-    // let mut wip_config = bedwars_config::BedwarsWIPConfig::default();
-
-    // if let Ok(config) = bedwars_config::load_config() {
-    //     wip_config = bedwars_config::BedwarsWIPConfig::from_saved_config(&config);
-    //     tracing::info!("Using saved bedwars config");
-    //     commands.insert_resource(config);
-    // } else {
-    //     tracing::warn!("No bedwars config found, using default");
-    // }
 
     let wip_config = {
         if let Ok(config) = bedwars_config::load_config() {

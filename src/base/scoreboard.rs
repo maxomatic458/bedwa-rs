@@ -12,7 +12,7 @@ use crate::Team;
 pub struct ScoreboardPlugin;
 
 #[derive(Debug, Clone, Component)]
-pub struct BedwarsScoreboad {
+pub struct BedwarsScoreboard {
     pub entries: HashMap<Team, ScoreboardEntry>,
 }
 
@@ -36,7 +36,7 @@ impl Plugin for ScoreboardPlugin {
 fn update_match_scoreboard(
     commands: Commands,
     players: Query<(&Team, &EntityLayerId)>,
-    mut scoreboard: Query<(&mut BedwarsScoreboad, &mut ObjectiveScores)>,
+    mut scoreboard: Query<(&mut BedwarsScoreboard, &mut ObjectiveScores)>,
     match_state: Res<MatchState>,
 ) {
     if !match_state.is_changed() {
@@ -139,6 +139,6 @@ fn create_scoreboard(
             layer: layer_id,
             ..Default::default()
         })
-        .insert(BedwarsScoreboad { entries })
+        .insert(BedwarsScoreboard { entries })
         .id()
 }

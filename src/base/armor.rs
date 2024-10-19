@@ -1,5 +1,6 @@
-use crate::utils::enchantments::{protection_reduction, Enchantment, ItemStackExtEnchantments};
 use valence::{prelude::Equipment, ItemKind, ItemStack};
+
+use super::enchantments::{protection_reduction, Enchantment, ItemStackExtEnchantments};
 
 pub trait ItemKindExtArmor {
     /// The armor points of that item

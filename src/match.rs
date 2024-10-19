@@ -16,7 +16,7 @@ use valence::{
     prelude::{Equipment, IntoSystemConfigs, Inventory, Resource},
     protocol::{sound::SoundCategory, Sound},
     title::SetTitle,
-    ChunkLayer, GameMode, ItemKind, ItemStack,
+    ChunkLayer, GameMode, ItemKind,
 };
 
 use crate::{
@@ -110,8 +110,7 @@ fn start_match(
     {
         *game_mode = GameMode::Survival;
         inventory.clear();
-        inventory.set_slot(9, ItemStack::new(ItemKind::Dirt, 69, None));
-        inventory.readonly = false;
+        inventory.readonly = true;
 
         let team_spawn = bedwars_config.spawns.get(&team.name).unwrap();
         pos.set(team_spawn.clone());

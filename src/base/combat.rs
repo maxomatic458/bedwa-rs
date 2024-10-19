@@ -25,8 +25,10 @@ const CRIT_MULTIPLIER: f32 = 1.5;
 /// Attached to every client.
 #[derive(Component, Default)]
 pub struct CombatState {
-    last_attacked_tick: i64,
-    is_sprinting: bool,
+    pub last_attacked_tick: i64,
+    pub is_sprinting: bool,
+    /// The last tick the player was hit
+    pub last_hit_tick: i64,
 }
 
 pub struct CombatPlugin;
@@ -84,6 +86,12 @@ fn combat_system(
         else {
             continue;
         };
+        if attacker.state.last_attacked_tick + ATTACK_COOLDOWN_TICKS >= server.current_tick() {
+            continue;
+        }
+
+        attacker.state.last_attacked_tick = server.current_tick();
+        victim.state.last_hit_tick = server.current_tick();
 
         let dir = (victim.pos.0 - attacker.pos.0).normalize().as_vec3();
 
@@ -99,20 +107,15 @@ fn combat_system(
             KNOCKBACK_DEFAULT_Y
         };
 
-        if attacker.state.last_attacked_tick + ATTACK_COOLDOWN_TICKS >= server.current_tick() {
-            continue;
-        }
+        let mut knockback_vec = Vec3::new(dir.x * xz_knockback, y_knockback, dir.z * xz_knockback);
+        let attack_weapon = attacker.inventory.slot(attacker.held_item.slot());
 
-        attacker.state.last_attacked_tick = server.current_tick();
+        knockback_vec += attack_weapon.knockback_extra();
 
-        victim
-            .client
-            .set_velocity([dir.x * xz_knockback, y_knockback, dir.z * xz_knockback]);
+        victim.client.set_velocity(knockback_vec);
 
         victim.client.trigger_status(EntityStatus::PlayAttackSound);
         victim.statuses.trigger(EntityStatus::PlayAttackSound);
-
-        let attack_weapon = attacker.inventory.slot(attacker.held_item.slot());
 
         let weapon_damage = attack_weapon.damage();
         let damage = weapon_damage
