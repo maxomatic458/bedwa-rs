@@ -156,7 +156,7 @@ fn on_death(
             commands.entity(player_ent).insert(player_respawn_timer);
         } else {
             commands.entity(player_ent).insert(Spectator);
-            commands.entity(player_ent).remove::<IsDead>();
+            // commands.entity(player_ent).remove::<IsDead>();
             commands.entity(player_ent).remove::<Team>();
         }
     }

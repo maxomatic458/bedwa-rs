@@ -84,7 +84,7 @@ fn on_shop_open(
     mut commands: Commands,
     mut events: EventReader<InteractEntityEvent>,
     mut players: Query<(Entity, &mut Client, &Username), (With<PlayerEntity>, Without<IsDead>)>,
-    shops: Query<&Position, With<Position>>,
+    shops: Query<&Position, With<Shop>>,
     shop_config: Res<ShopConfig>,
 ) {
     for event in events.read() {
@@ -150,6 +150,8 @@ fn on_shop_click(
             continue;
         };
 
+        let team_color = bedwars_config.teams.get(&team.name).unwrap();
+
         let select_index = event.idx;
 
         let category = shop_state.selected_category.clone();
@@ -163,12 +165,9 @@ fn on_shop_click(
                     shop_state.selected_category = Some(category_name.clone());
                     for item in shop_items {
                         let next_slot = menu_inventory.first_empty_slot().unwrap();
-                        let mut item_stack: ItemStack = item.offer.clone().into();
-
-                        if item_stack.item == ItemKind::WhiteWool {
-                            item_stack.item =
-                                bedwars_config.teams.get(&team.name).unwrap().wool_block();
-                        }
+                        let item_stack: ItemStack = item.offer.clone().into();
+                        // Convert to team color
+                        let item_stack = team_color.to_team_item_stack(item_stack);
 
                         menu_inventory.set_slot(next_slot, item_stack);
                     }
@@ -197,11 +196,9 @@ fn on_shop_click(
                 if let Some((_, shop_items)) = shop_config.shop_items.get(&category) {
                     if let Some(item_to_buy) = shop_items.get(select_index as usize) {
                         let price = item_to_buy.price.clone().into();
-                        let mut offer: ItemStack = item_to_buy.offer.clone().into();
-
-                        if offer.item == ItemKind::WhiteWool {
-                            offer.item = bedwars_config.teams.get(&team.name).unwrap().wool_block();
-                        }
+                        let offer: ItemStack = item_to_buy.offer.clone().into();
+                        // Convert to team color
+                        let offer = team_color.to_team_item_stack(offer);
 
                         let mut bought = false;
                         if inventory.try_remove_all(&price) {

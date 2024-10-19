@@ -21,6 +21,8 @@ use valence::{
 
 use crate::utils::despawn_timer::DespawnTimer;
 
+use super::item_pickup::PickupMarker;
+
 const ITEM_PICKUP_DELAY_SECS: f32 = 0.5;
 const DROP_STRENGTH: f32 = 4.5;
 const DROP_OFFSET: f64 = 1.6;
@@ -80,6 +82,7 @@ fn drop_items(
                 ..Default::default()
             })
             .insert(DroppedItemsPickupTimer::default())
+            .insert(PickupMarker)
             .insert(DespawnTimer::from_secs(DESPAWN_ITEMS_DELAY_SECS));
     }
 }

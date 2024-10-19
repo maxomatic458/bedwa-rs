@@ -15,8 +15,8 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 thiserror = "1.0.64"
 tracing = "0.1.40"
-# valence = { git = "https://github.com/maxomatic458/valence/" }
-valence = { path = "../valence" }
+valence = { git = "https://github.com/maxomatic458/valence/" }
+# valence = { path = "../valence" }
 # item-stack-serialize
 # valence = { git = "https://github.com/maxomatic458/valence/", branch = "item-stack-serialize"}
 # valence_spatial = "=0.2.0-alpha.1"

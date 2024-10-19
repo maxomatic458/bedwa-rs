@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy_ecs::{
     entity::Entity,
     event::EventReader,
-    system::{Commands, Query, Res},
+    system::{Commands, Query, Res, ResMut},
 };
 use bevy_state::{prelude::in_state, state::OnEnter};
 use valence::{
@@ -20,7 +20,10 @@ use valence::{
 };
 
 use crate::{
-    base::{break_blocks::BedDestroyedEvent, combat::CombatState, fall_damage::FallingState},
+    base::{
+        break_blocks::BedDestroyedEvent, combat::CombatState, death::PlayerDeathEvent,
+        fall_damage::FallingState,
+    },
     bedwars_config::BedwarsConfig,
     utils::inventory::InventoryExt,
     GameState, Team,
@@ -70,7 +73,10 @@ pub struct MatchPlugin;
 impl Plugin for MatchPlugin {
     fn build(&self, app: &mut valence::app::App) {
         app.add_systems(OnEnter(GameState::Match), (start_match,))
-            .add_systems(Update, (on_bed_destroy,).run_if(in_state(GameState::Match)));
+            .add_systems(
+                Update,
+                (on_bed_destroy, on_player_death).run_if(in_state(GameState::Match)),
+            );
         // app.add_systems(Update, (
 
         // ))
@@ -123,6 +129,7 @@ fn start_match(
 
         let team = match_state.teams.get_mut(&team.name).unwrap();
 
+        team.players_alive.push(username.to_string());
         team.players.push(username.to_string());
     }
 
@@ -133,6 +140,7 @@ fn on_bed_destroy(
     mut clients: Query<(&mut Client, &Team)>,
     mut events: EventReader<BedDestroyedEvent>,
     mut layer: Query<&mut ChunkLayer>,
+    mut match_state: ResMut<MatchState>,
     bedwars_config: Res<BedwarsConfig>,
 ) {
     for event in events.read() {
@@ -145,6 +153,12 @@ fn on_bed_destroy(
 
         let bed_pos = bedwars_config.beds.get(&event.team.name).unwrap();
 
+        match_state
+            .teams
+            .get_mut(&event.team.name)
+            .unwrap()
+            .bed_destroyed = true;
+
         let mut layer = layer.single_mut();
         layer.play_sound(
             Sound::EntityHorseDeath,
@@ -153,5 +167,34 @@ fn on_bed_destroy(
             1.0,
             1.0,
         );
+    }
+}
+
+fn on_player_death(
+    mut events: EventReader<PlayerDeathEvent>,
+    players: Query<(&Username, &Team)>,
+    mut match_state: ResMut<MatchState>,
+) {
+    for event in events.read() {
+        let Ok((victim_name, victim_team)) = players.get(event.victim) else {
+            continue;
+        };
+
+        let victim_team_state = match_state.teams.get_mut(&victim_team.name).unwrap();
+        victim_team_state
+            .players_alive
+            .retain(|p| p != &victim_name.0);
+
+        let victim_stats = match_state.player_stats.get_mut(&victim_name.0).unwrap();
+        victim_stats.deaths += 1;
+
+        if let Some(attacker) = event.attacker {
+            let Ok((attacker_name, _)) = players.get(attacker) else {
+                continue;
+            };
+
+            let attacker_stats = match_state.player_stats.get_mut(&attacker_name.0).unwrap();
+            attacker_stats.kills += 1;
+        }
     }
 }

@@ -1,7 +1,8 @@
 use bevy_ecs::{
     entity::Entity,
+    event::EventWriter,
     query::{With, Without},
-    system::{Commands, Query, Res},
+    system::{Query, Res},
 };
 use bevy_state::prelude::in_state;
 use valence::{
@@ -12,9 +13,7 @@ use valence::{
 
 use crate::{bedwars_config, GameState, Team};
 
-use super::death::IsDead;
-
-// TODO: here arena bounds?
+use super::death::{IsDead, PlayerHurtEvent};
 
 pub struct VoidDeathPlugin;
 
@@ -26,14 +25,19 @@ impl Plugin for VoidDeathPlugin {
 
 #[allow(clippy::type_complexity)]
 fn void_death(
-    mut commands: Commands,
     mut clients: Query<(Entity, &Position), (With<Team>, Without<IsDead>)>,
     bedwars_config: Res<bedwars_config::BedwarsConfig>,
+    mut event_writer: EventWriter<PlayerHurtEvent>,
 ) {
     for (player, position) in &mut clients {
         let void = &bedwars_config.bounds.0.y.min(bedwars_config.bounds.1.y);
         if position.y < *void as f64 {
-            commands.entity(player).insert(IsDead);
+            event_writer.send(PlayerHurtEvent {
+                attacker: None,
+                victim: player,
+                position: **position,
+                damage: f32::INFINITY,
+            });
         }
     }
 }

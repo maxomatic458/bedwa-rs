@@ -53,7 +53,7 @@ fn handle_fall_damage(
             // player is on ground
             if fall_damage_state.falling {
                 let blocks_fallen = fall_damage_state.fall_start_y - position.0.y;
-                if blocks_fallen >= 3.0 {
+                if blocks_fallen > 3.0 {
                     let damage = (blocks_fallen - 3.0).max(0.0) as f32;
 
                     event_writer.send(PlayerHurtEvent {

@@ -1,7 +1,7 @@
 use base::{
     break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin,
     death::DeathPlugin, drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin,
-    item_pickup::ItemPickupPlugin, void_death::VoidDeathPlugin,
+    item_pickup::ItemPickupPlugin, scoreboard::ScoreboardPlugin, void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -47,7 +47,7 @@ pub struct ActivePlayer;
 pub struct Editor;
 
 /// A component that will be attached to players in a match
-#[derive(Debug, Clone, Component, PartialEq)]
+#[derive(Debug, Clone, Component, PartialEq, Eq, Hash)]
 pub struct Team {
     pub name: String,
     pub color: TeamColor,
@@ -73,6 +73,7 @@ fn main() {
         .add_plugins(StatesPlugin)
         .add_plugins(ChatPlugin)
         .add_plugins(SpectatorPlugin)
+        .add_plugins(ScoreboardPlugin)
         .add_plugins(EditPlugin)
         .add_plugins(VoidDeathPlugin)
         .add_plugins(DeathPlugin)

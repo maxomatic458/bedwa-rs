@@ -8,16 +8,11 @@ use entity::{
     EntityLayerId, Position, Velocity,
 };
 use math::{DVec3, Vec3};
-use prelude::{
-    Commands, Entity, Event, EventReader, EventWriter, IntoSystemConfigs, Query, Res, ResMut,
-};
+use prelude::{Commands, Entity, Event, EventReader, EventWriter, IntoSystemConfigs, Query, Res};
 use rand::Rng;
 use valence::*;
 
-use crate::{
-    bedwars_config::BedwarsConfig, r#match::MatchState, utils::despawn_timer::DespawnTimer,
-    GameState, Team,
-};
+use crate::{bedwars_config::BedwarsConfig, utils::despawn_timer::DespawnTimer, GameState, Team};
 
 use super::{build::PlayerPlacedBlocks, drop_items::DroppedItemsPickupTimer};
 use crate::utils::item_kind::ItemKindExtColor;
@@ -47,7 +42,7 @@ fn break_blocks(
     mut layer: Query<(Entity, &mut ChunkLayer)>,
     player_placed_blocks: Res<PlayerPlacedBlocks>,
     bedwars_config: Res<BedwarsConfig>,
-    mut match_state: ResMut<MatchState>,
+    // match_state: ResMut<MatchState>,
     mut event_writer: EventWriter<BedDestroyedEvent>,
 ) {
     let (layer, mut layer_mut) = layer.single_mut();
@@ -80,16 +75,14 @@ fn break_blocks(
                     layer_mut.set_block(BlockPos::new(block.x, block.y, block.z), BlockState::AIR);
                 }
 
-                let victim_team_color = bedwars_config.teams.get(team_name).unwrap();
-
-                let victim_team_state = match_state.teams.get_mut(team_name).unwrap();
-                victim_team_state.bed_destroyed = true;
+                let (victim_team, victim_color) =
+                    bedwars_config.teams.get_key_value(team_name).unwrap();
 
                 event_writer.send(BedDestroyedEvent {
                     attacker: event.client,
                     team: Team {
-                        name: team_name.clone(),
-                        color: *victim_team_color,
+                        name: victim_team.clone(),
+                        color: *victim_color,
                     },
                 });
             }

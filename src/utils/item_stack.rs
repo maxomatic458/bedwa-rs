@@ -5,12 +5,12 @@ use super::{
     item_kind::ItemKindExtWeapons,
 };
 
-pub trait ItemStackExtCombat {
+pub trait ItemStackExtWeapons {
     /// Get the damage the item does, including enchantments.
     fn damage(&self) -> f32;
 }
 
-impl ItemStackExtCombat for ItemStack {
+impl ItemStackExtWeapons for ItemStack {
     fn damage(&self) -> f32 {
         let base = self.item.damage();
 

@@ -44,7 +44,38 @@
               "Enchantments": [
                 {
                   "id": "minecraft:sharpness",
-                  "lvl": 100
+                  "lvl": 2
+                }
+              ]
+            }
+          },
+          "price": {
+            "item": "dirt",
+            "count": 1,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "wooden_sword",
+            "count": 1,
+            "nbt": null
+          },
+          "price": {
+            "item": "dirt",
+            "count": 1,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "leather_helmet",
+            "count": 1,
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:protection",
+                  "lvl": 4
                 }
               ]
             }

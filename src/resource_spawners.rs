@@ -11,8 +11,8 @@ use valence::{
 };
 
 use crate::{
-    base::item_pickup::PickupMarker, bedwars_config::BedwarsConfig, r#match::MatchState, GameState,
-    Team,
+    base::item_pickup::PickupMarker, bedwars_config::BedwarsConfig, r#match::MatchState,
+    utils::block::get_block_center, GameState, Team,
 };
 
 pub struct ResourceSpawnerPlugin;
@@ -77,7 +77,12 @@ fn spawn_resources(
             let layer = layers.single();
 
             // adjust pos to center of block
-            let pos = DVec3::new(pos.0.x - 0.5, pos.0.y, pos.0.z - 0.5);
+            // let pos = DVec3::new(pos.0.x + 0.5, pos.0.y, pos.0.z + 0.5);
+            let pos = get_block_center(BlockPos::new(
+                pos.0.x as i32,
+                pos.0.y as i32,
+                pos.0.z as i32,
+            ));
 
             commands
                 .spawn(ItemEntityBundle {

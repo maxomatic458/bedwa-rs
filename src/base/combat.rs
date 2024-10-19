@@ -6,9 +6,10 @@ use valence::{
     prelude::*,
 };
 
-use crate::{utils::item_stack::ItemStackExtCombat, GameState};
+use crate::{utils::item_stack::ItemStackExtWeapons, GameState};
 
 use super::{
+    armor::EquipmentExtDamageReduction,
     death::{IsDead, PlayerHurtEvent},
     fall_damage::FallingState,
 };
@@ -51,6 +52,7 @@ struct CombatQuery {
     inventory: &'static Inventory,
     held_item: &'static HeldItem,
     falling_state: &'static FallingState,
+    equipment: &'static Equipment,
     entity: Entity,
 }
 
@@ -113,18 +115,21 @@ fn combat_system(
         let attack_weapon = attacker.inventory.slot(attacker.held_item.slot());
 
         let weapon_damage = attack_weapon.damage();
-
-        let final_damage = weapon_damage
+        let damage = weapon_damage
             * if attacker.falling_state.falling {
                 CRIT_MULTIPLIER
             } else {
                 1.0
             };
 
+        tracing::info!("Dealing {} damage to {}", damage, victim.entity);
+
+        let damage_after_armor = victim.equipment.received_damage(damage);
+
         event_writer.send(PlayerHurtEvent {
             attacker: Some(attacker.entity),
             victim: victim.entity,
-            damage: final_damage,
+            damage: damage_after_armor,
             position: victim.pos.0,
         });
     }

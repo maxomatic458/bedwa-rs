@@ -3,8 +3,9 @@ use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 use valence::{
     command::parsers::{CommandArg, CommandArgParseError},
+    nbt::{compound, Value},
     protocol::packets::play::command_tree_s2c::StringArg,
-    ItemKind,
+    ItemKind, ItemStack,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash)]
@@ -182,6 +183,28 @@ impl TeamColor {
             TeamColor::Green => "§2",
             TeamColor::Red => "§c",
             TeamColor::Black => "§0",
+        }
+    }
+
+    /// Converts neutral colorable items to the team color,
+    /// such as leather armor and wool.
+    pub fn to_team_item_stack(&self, stack: ItemStack) -> ItemStack {
+        match stack.item {
+            ItemKind::LeatherHelmet
+            | ItemKind::LeatherChestplate
+            | ItemKind::LeatherLeggings
+            | ItemKind::LeatherBoots => {
+                let mut nbt = stack.nbt.unwrap_or_default();
+                nbt.merge(compound! {
+                    "display" => compound! {
+                        "color" => Value::Int(self.hex() as i32)
+                    }
+                });
+
+                ItemStack::new(stack.item, stack.count, Some(nbt))
+            }
+            ItemKind::WhiteWool => ItemStack::new(self.wool_block(), stack.count, stack.nbt),
+            _ => stack,
         }
     }
 }

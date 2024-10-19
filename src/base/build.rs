@@ -61,7 +61,7 @@ fn place_blocks(
         }
 
         for mut block_hitbox in block_hitboxes {
-            let tolerance = DVec3::new(0.0, 0.005, 0.0);
+            let tolerance = DVec3::new(0.0, 0.01, 0.0);
 
             block_hitbox = Aabb::new(
                 block_hitbox.min()
