@@ -4,7 +4,6 @@ use bevy_ecs::{
     query::With,
     system::{Commands, Query},
 };
-use bevy_time::{Timer, TimerMode};
 use valence::{
     app::{Plugin, Update},
     entity::{
@@ -15,28 +14,22 @@ use valence::{
     },
     inventory::DropItemStackEvent,
     math::{vec3, DVec3},
-    prelude::Component,
     ChunkLayer, EntityLayer,
 };
 
 use crate::utils::despawn_timer::DespawnTimer;
 
-use super::item_pickup::PickupMarker;
+use super::{
+    item_pickup::PickupMarker,
+    physics::{CollidesWithBlocks, GetsStuckOnCollision, Gravity, PhysicsMarker},
+};
 
-const ITEM_PICKUP_DELAY_SECS: f32 = 0.5;
 const DROP_STRENGTH: f32 = 4.5;
 const DROP_OFFSET: f64 = 1.6;
-const DESPAWN_ITEMS_DELAY_SECS: f32 = 120.0;
 
-/// The amount of time the item needs to be in the world before it can be picked up
-#[derive(Debug, Clone, Component)]
-pub struct DroppedItemsPickupTimer(pub Timer);
+pub const ITEM_GRAVITY_MPSS: f32 = 16.0;
 
-impl Default for DroppedItemsPickupTimer {
-    fn default() -> Self {
-        Self(Timer::from_seconds(ITEM_PICKUP_DELAY_SECS, TimerMode::Once))
-    }
-}
+/// A marker for items that can be picked up once the inner time elapses.
 
 pub struct ItemDropPlugin;
 
@@ -81,8 +74,11 @@ fn drop_items(
                 entity_no_gravity: NoGravity(true),
                 ..Default::default()
             })
-            .insert(DroppedItemsPickupTimer::default())
-            .insert(PickupMarker)
-            .insert(DespawnTimer::from_secs(DESPAWN_ITEMS_DELAY_SECS));
+            .insert(PickupMarker::default())
+            .insert(Gravity::items())
+            .insert(PhysicsMarker)
+            .insert(CollidesWithBlocks(None))
+            .insert(GetsStuckOnCollision::ground())
+            .insert(DespawnTimer::items());
     }
 }

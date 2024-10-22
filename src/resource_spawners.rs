@@ -1,18 +1,28 @@
 use bevy_ecs::bundle::Bundle;
 use bevy_state::{prelude::in_state, state::OnEnter};
 use bevy_time::{Time, Timer, TimerMode};
+use rand::Rng;
 use valence::{
     entity::{
         entity::NoGravity,
         item::{ItemEntityBundle, Stack},
+        Velocity,
     },
     prelude::*,
     ItemStack,
 };
 
 use crate::{
-    base::item_pickup::PickupMarker, bedwars_config::BedwarsConfig, r#match::MatchState,
-    utils::block::get_block_center, GameState, Team,
+    base::{
+        item_pickup::PickupMarker,
+        physics::{
+            CollidesWithBlocks, GetsStuckOnCollision, Gravity, PhysicsMarker, SimPhysicsForTime,
+        },
+    },
+    bedwars_config::BedwarsConfig,
+    r#match::MatchState,
+    utils::block::get_block_center,
+    GameState, Team,
 };
 
 pub struct ResourceSpawnerPlugin;
@@ -76,13 +86,22 @@ fn spawn_resources(
 
             let layer = layers.single();
 
-            // adjust pos to center of block
-            // let pos = DVec3::new(pos.0.x + 0.5, pos.0.y, pos.0.z + 0.5);
-            let pos = get_block_center(BlockPos::new(
+            let mut pos = get_block_center(BlockPos::new(
                 pos.0.x as i32,
                 pos.0.y as i32,
                 pos.0.z as i32,
             ));
+
+            pos.y += 0.2;
+
+            // Make the items pop up a bit
+            let mut rng = rand::thread_rng();
+
+            let velocity = Vec3::new(
+                rng.gen_range(-1.9..1.9),
+                rng.gen_range(1.1..1.6),
+                rng.gen_range(-1.9..1.9),
+            );
 
             commands
                 .spawn(ItemEntityBundle {
@@ -92,7 +111,13 @@ fn spawn_resources(
                     entity_no_gravity: NoGravity(true),
                     ..Default::default()
                 })
-                .insert(PickupMarker);
+                .insert(Velocity(velocity))
+                .insert(PhysicsMarker)
+                .insert(SimPhysicsForTime::for_secs(2.0))
+                .insert(Gravity::items())
+                .insert(CollidesWithBlocks(None))
+                .insert(GetsStuckOnCollision::ground())
+                .insert(PickupMarker::instant());
         }
     }
 }

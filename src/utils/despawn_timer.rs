@@ -1,12 +1,21 @@
 use bevy_time::{Timer, TimerMode};
 use valence::prelude::*;
 
+pub const DESPAWN_ITEMS_DELAY_SECS: f32 = 300.0;
+
 #[derive(Debug, Clone, Component)]
 pub struct DespawnTimer(pub Timer);
 
 impl DespawnTimer {
     pub fn from_secs(secs: f32) -> Self {
         Self(Timer::from_seconds(secs, TimerMode::Once))
+    }
+
+    pub fn items() -> Self {
+        Self(Timer::from_seconds(
+            DESPAWN_ITEMS_DELAY_SECS,
+            TimerMode::Once,
+        ))
     }
 }
 

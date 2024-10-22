@@ -1,43 +1,8 @@
+use bevy_ecs::entity::Entity;
 use valence::{
-    math::{Aabb, DVec3, I16Vec3, Vec3},
-    BlockPos, ChunkLayer,
+    math::{Aabb, DVec3, Vec3},
+    BlockPos, Direction,
 };
-
-use crate::utils::aabb::AabbExt;
-
-pub fn thick_world_raycast(
-    chunk_layer: &ChunkLayer,
-    mut hitbox: Aabb,
-    mut direction: Vec3,
-    max_distance: f64,
-    step: f64,
-) -> Vec<(DVec3, I16Vec3)> {
-    let mut distance = 0.0;
-    // let mut pos = hitbox.center();
-    direction = direction.normalize();
-
-    while distance < max_distance {
-        hitbox = Aabb::new(
-            hitbox.min() + direction.as_dvec3() * step,
-            hitbox.max() + direction.as_dvec3() * step,
-        );
-
-        let mut cols = get_real_world_intersections(chunk_layer, &hitbox);
-        if !cols.is_empty() {
-            cols.sort_by(|a, b| {
-                let a_dist = (a.0 - hitbox.center()).length_squared();
-                let b_dist = (b.0 - hitbox.center()).length_squared();
-                a_dist.partial_cmp(&b_dist).unwrap()
-            });
-
-            return cols;
-        }
-
-        distance += step;
-    }
-
-    vec![]
-}
 
 /// Returns a list of all the blocks that are inside (or intersect) the given AABB
 pub fn aabb_full_block_intersections(aabb: &Aabb) -> Vec<BlockPos> {
@@ -57,70 +22,160 @@ pub fn aabb_full_block_intersections(aabb: &Aabb) -> Vec<BlockPos> {
     blocks
 }
 
-/// Returns the position of the first intersection as well as the normal of the blockface that was hit
-fn get_real_world_intersections(chunk_layer: &ChunkLayer, aabb: &Aabb) -> Vec<(DVec3, I16Vec3)> {
-    let block_intersections = aabb_full_block_intersections(aabb);
-
-    let mut cols = Vec::new();
-
-    for block_pos in block_intersections {
-        let Some(block) = chunk_layer.block(block_pos) else {
-            continue;
-        };
-
-        if block.state.is_air() {
-            continue;
-        }
-
-        for mut block_hitbox in block.state.collision_shapes() {
-            block_hitbox = Aabb::new(
-                block_hitbox.min()
-                    + DVec3::new(block_pos.x as f64, block_pos.y as f64, block_pos.z as f64),
-                block_hitbox.max()
-                    + DVec3::new(block_pos.x as f64, block_pos.y as f64, block_pos.z as f64),
-            );
-
-            if aabb.intersects(block_hitbox) {
-                let hit_point = block_hitbox.projected_point_exact(aabb.center());
-                let hit_normal = get_hit_normal(hit_point, block_hitbox);
-
-                cols.push((hit_point, hit_normal));
-            }
-        }
-    }
-
-    cols
+#[derive(Debug)]
+pub enum CollisionObject {
+    Block { pos: DVec3, face_normal: Direction },
+    Entity(Entity),
 }
 
-fn get_hit_normal(point: DVec3, block: Aabb) -> I16Vec3 {
-    let mut normal = I16Vec3::ZERO;
+pub enum CollisionType {
+    Block,
+    Entity,
+    Both,
+}
 
-    if point.x == block.min().x {
-        normal.x = -1;
-    } else if point.x == block.max().x {
-        normal.x = 1;
+/// Perform swept AABB collision
+/// # Arguments
+/// * `hb1` - The first moving AABB
+/// * `velocity` - The velocity of the first AABB
+/// * `hb2` - The second static AABB
+/// # Returns
+/// Entry time and x, y, z normal of the collision
+
+type CollisionResult = (f64, (Option<i8>, Option<i8>, Option<i8>));
+
+pub fn collide(hb1: &Aabb, velocity: Vec3, hb2: &Aabb) -> CollisionResult {
+    let (vx, vy, vz) = (velocity.x, velocity.y, velocity.z);
+
+    let no_collision = (1.0, (None, None, None));
+
+    fn time(x: f64, y: f32) -> f64 {
+        if y != 0.0 {
+            x / y as f64
+        } else if x > 0.0 {
+            f64::INFINITY
+        } else {
+            f64::NEG_INFINITY
+        }
     }
 
-    if point.y == block.min().y {
-        normal.y = -1;
-    } else if point.y == block.max().y {
-        normal.y = 1;
+    let x_entry = if vx != 0.0 {
+        time(
+            if vx > 0.0 {
+                hb2.min().x - hb1.max().x
+            } else {
+                hb2.max().x - hb1.min().x
+            },
+            vx,
+        )
+    } else if hb1.max().x < hb2.min().x || hb1.min().x > hb2.max().x {
+        return no_collision;
+    } else {
+        f64::NEG_INFINITY
+    };
+
+    let x_exit = if vx != 0.0 {
+        time(
+            if vx > 0.0 {
+                hb2.max().x - hb1.min().x
+            } else {
+                hb2.min().x - hb1.max().x
+            },
+            vx,
+        )
+    } else {
+        f64::INFINITY
+    };
+
+    let y_entry = if vy != 0.0 {
+        time(
+            if vy > 0.0 {
+                hb2.min().y - hb1.max().y
+            } else {
+                hb2.max().y - hb1.min().y
+            },
+            vy,
+        )
+    } else if hb1.max().y < hb2.min().y || hb1.min().y > hb2.max().y {
+        return no_collision;
+    } else {
+        f64::NEG_INFINITY
+    };
+
+    let y_exit = if vy != 0.0 {
+        time(
+            if vy > 0.0 {
+                hb2.max().y - hb1.min().y
+            } else {
+                hb2.min().y - hb1.max().y
+            },
+            vy,
+        )
+    } else {
+        f64::INFINITY
+    };
+
+    let z_entry = if vz != 0.0 {
+        time(
+            if vz > 0.0 {
+                hb2.min().z - hb1.max().z
+            } else {
+                hb2.max().z - hb1.min().z
+            },
+            vz,
+        )
+    } else if hb1.max().z < hb2.min().z || hb1.min().z > hb2.max().z {
+        return no_collision;
+    } else {
+        f64::NEG_INFINITY
+    };
+
+    let z_exit = if vz != 0.0 {
+        time(
+            if vz > 0.0 {
+                hb2.max().z - hb1.min().z
+            } else {
+                hb2.min().z - hb1.max().z
+            },
+            vz,
+        )
+    } else {
+        f64::INFINITY
+    };
+
+    if x_entry < 0.0 && y_entry < 0.0 && z_entry < 0.0 {
+        return no_collision;
     }
 
-    if point.z == block.min().z {
-        normal.z = -1;
-    } else if point.z == block.max().z {
-        normal.z = 1;
+    if x_entry > 1.0 || y_entry > 1.0 || z_entry > 1.0 {
+        return no_collision;
     }
 
-    if normal == I16Vec3::ZERO {
-        panic!(
-            "No normal found for point: {:?} and block: {:?}",
-            point, block
-        );
+    let entry = x_entry.max(y_entry).max(z_entry);
+    let exit = x_exit.min(y_exit).min(z_exit);
+
+    if entry > exit {
+        return no_collision;
     }
 
-    normal
+    let nx = if entry == x_entry {
+        Some(if vx > 0.0 { -1 } else { 1 })
+    } else {
+        None
+    };
+    let ny = if entry == y_entry {
+        Some(if vy > 0.0 { -1 } else { 1 })
+    } else {
+        None
+    };
+    let nz = if entry == z_entry {
+        Some(if vz > 0.0 { -1 } else { 1 })
+    } else {
+        None
+    };
+
+    // Return the entry time and the normal of the surface collided with
+    (entry, (nx, ny, nz))
 }
 
 #[cfg(test)]

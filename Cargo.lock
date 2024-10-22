@@ -166,8 +166,10 @@ dependencies = [
  "bevy_state",
  "bevy_time",
  "color-eyre",
+ "iter_tools",
  "ordermap",
  "rand",
+ "rayon",
  "serde",
  "serde_json",
  "thiserror",
@@ -503,6 +505,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "clone_dyn_types"
+version = "0.23.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f4f0e34968641cc21b39c159b7d07e8c0f573cbc0ef9cd59e452fe6774c0579"
+
+[[package]]
 name = "color-eyre"
 version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -582,6 +590,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "crossbeam-deque"
+version = "0.8.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "613f8cc01fe9cf1a3eb3d7f488fd2fa8388403e97039e2f73692932e291a770d"
+dependencies = [
+ "crossbeam-epoch",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-epoch"
+version = "0.9.18"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5b82ac4a3c2ca9c3460964f020e1402edd5753411d7737aa39c3714ad1b5420e"
+dependencies = [
+ "crossbeam-utils",
+]
+
+[[package]]
 name = "crossbeam-utils"
 version = "0.8.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -654,6 +681,12 @@ name = "downcast-rs"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
+
+[[package]]
+name = "either"
+version = "1.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "60b1af1c220855b6ceac025d3f6ecdd2b7c4894bfe9cd9bda4fbb4bc7c0d4cf0"
 
 [[package]]
 name = "equivalent"
@@ -1042,6 +1075,25 @@ name = "ipnet"
 version = "2.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddc24109865250148c2e0f3d25d4f0f479571723792d3802153c60922a4fb708"
+
+[[package]]
+name = "iter_tools"
+version = "0.21.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "27812bb0a056539d62930a899759af39dfab17ac73a17d5caf58365762657891"
+dependencies = [
+ "clone_dyn_types",
+ "itertools",
+]
+
+[[package]]
+name = "itertools"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
+dependencies = [
+ "either",
+]
 
 [[package]]
 name = "itoa"
@@ -1497,6 +1549,26 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ec0be4795e2f6a28069bec0b5ff3e2ac9bafc99e6a9a7dc3547996c5c816922c"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "rayon"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b418a60154510ca1a002a752ca9714984e21e4241e804d32555251faf8b78ffa"
+dependencies = [
+ "either",
+ "rayon-core",
+]
+
+[[package]]
+name = "rayon-core"
+version = "1.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1465873a3dfdaa8ae7cb14b4383657caab0b3e8a0aa9ae8e04b044854c8dfce2"
+dependencies = [
+ "crossbeam-deque",
+ "crossbeam-utils",
 ]
 
 [[package]]
@@ -2190,7 +2262,6 @@ dependencies = [
 [[package]]
 name = "valence"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2222,7 +2293,6 @@ dependencies = [
 [[package]]
 name = "valence_advancement"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2235,7 +2305,6 @@ dependencies = [
 [[package]]
 name = "valence_anvil"
 version = "0.1.0"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2253,7 +2322,6 @@ dependencies = [
 [[package]]
 name = "valence_boss_bar"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2266,7 +2334,6 @@ dependencies = [
 [[package]]
 name = "valence_build_utils"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "proc-macro2",
@@ -2276,7 +2343,6 @@ dependencies = [
 [[package]]
 name = "valence_command"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2294,7 +2360,6 @@ dependencies = [
 [[package]]
 name = "valence_command_macros"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2304,7 +2369,6 @@ dependencies = [
 [[package]]
 name = "valence_entity"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2333,7 +2397,6 @@ dependencies = [
 [[package]]
 name = "valence_equipment"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2346,7 +2409,6 @@ dependencies = [
 [[package]]
 name = "valence_generated"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "heck",
@@ -2363,7 +2425,6 @@ dependencies = [
 [[package]]
 name = "valence_ident"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "serde",
  "thiserror",
@@ -2373,7 +2434,6 @@ dependencies = [
 [[package]]
 name = "valence_ident_macros"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2383,7 +2443,6 @@ dependencies = [
 [[package]]
 name = "valence_inventory"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2395,7 +2454,6 @@ dependencies = [
 [[package]]
 name = "valence_lang"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "heck",
@@ -2409,7 +2467,6 @@ dependencies = [
 [[package]]
 name = "valence_math"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "glam",
 ]
@@ -2417,7 +2474,6 @@ dependencies = [
 [[package]]
 name = "valence_nbt"
 version = "0.8.0"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "byteorder",
  "cesu8",
@@ -2430,7 +2486,6 @@ dependencies = [
 [[package]]
 name = "valence_network"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2461,7 +2516,6 @@ dependencies = [
 [[package]]
 name = "valence_player_list"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2473,7 +2527,6 @@ dependencies = [
 [[package]]
 name = "valence_protocol"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "aes",
  "anyhow",
@@ -2502,7 +2555,6 @@ dependencies = [
 [[package]]
 name = "valence_protocol_macros"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -2513,7 +2565,6 @@ dependencies = [
 [[package]]
 name = "valence_registry"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "bevy_app",
@@ -2531,7 +2582,6 @@ dependencies = [
 [[package]]
 name = "valence_scoreboard"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2543,7 +2593,6 @@ dependencies = [
 [[package]]
 name = "valence_server"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -2571,7 +2620,6 @@ dependencies = [
 [[package]]
 name = "valence_server_common"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2584,7 +2632,6 @@ dependencies = [
 [[package]]
 name = "valence_text"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "serde",
  "serde_json",
@@ -2597,7 +2644,6 @@ dependencies = [
 [[package]]
 name = "valence_weather"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",
@@ -2608,7 +2654,6 @@ dependencies = [
 [[package]]
 name = "valence_world_border"
 version = "0.2.0-alpha.1+mc.1.20.1"
-source = "git+https://github.com/maxomatic458/valence/#cf87bdefe36519ee0e5326423be5e39633a2940b"
 dependencies = [
  "bevy_app",
  "bevy_ecs",

@@ -31,6 +31,9 @@ pub trait InventoryExt {
     /// # Returns
     /// True if the stack was removed, false if the stack was not removed
     fn try_remove_all(&mut self, stack: &ItemStack) -> bool;
+
+    /// Checks if the inventory contains at least the one of the given stack
+    fn check_contains_stack(&self, stack: &ItemStack, ignore_nbt: bool) -> bool;
 }
 
 impl InventoryExt for Inventory {
@@ -189,5 +192,17 @@ impl InventoryExt for Inventory {
         }
 
         true
+    }
+
+    fn check_contains_stack(&self, stack: &ItemStack, ignore_nbt: bool) -> bool {
+        self.slots().any(|s| {
+            s.item == stack.item && s.count >= stack.count && {
+                if ignore_nbt {
+                    true
+                } else {
+                    s.nbt == stack.nbt
+                }
+            }
+        })
     }
 }

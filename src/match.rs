@@ -16,13 +16,13 @@ use valence::{
     prelude::{Equipment, IntoSystemConfigs, Inventory, Resource},
     protocol::{sound::SoundCategory, Sound},
     title::SetTitle,
-    ChunkLayer, GameMode, ItemKind,
+    ChunkLayer, GameMode, ItemKind, ItemStack,
 };
 
 use crate::{
     base::{
         break_blocks::BedDestroyedEvent, combat::CombatState, death::PlayerDeathEvent,
-        fall_damage::FallingState,
+        fall_damage::FallingState, physics::CollidableForEntities,
     },
     bedwars_config::BedwarsConfig,
     utils::inventory::InventoryExt,
@@ -112,6 +112,10 @@ fn start_match(
         inventory.clear();
         inventory.readonly = false;
 
+        inventory.set_slot(36, ItemStack::new(ItemKind::Brick, 64, None));
+        inventory.set_slot(37, ItemStack::new(ItemKind::IronIngot, 64, None));
+        inventory.set_slot(38, ItemStack::new(ItemKind::GoldIngot, 64, None));
+
         let team_spawn = bedwars_config.spawns.get(&team.name).unwrap();
         pos.set(team_spawn.clone());
 
@@ -120,6 +124,7 @@ fn start_match(
             .insert(CombatState::default())
             .insert(FallingState::default())
             .insert(Equipment::default())
+            .insert(CollidableForEntities)
             .insert(EquipmentInventorySync);
 
         match_state

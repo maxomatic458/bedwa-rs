@@ -428,7 +428,17 @@
                 "Lore": [
                   "{\"text\":\"4 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
                 ]
-              }
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:power",
+                  "lvl": 69
+                },
+                {
+                  "id": "minecraft:infinity",
+                  "lvl": 1
+                }
+              ]
             }
           },
           "price": {

@@ -14,8 +14,11 @@ use valence::*;
 
 use crate::{bedwars_config::BedwarsConfig, utils::despawn_timer::DespawnTimer, GameState, Team};
 
-use super::{build::PlayerPlacedBlocks, drop_items::DroppedItemsPickupTimer};
-use crate::utils::item_kind::ItemKindExtColor;
+use super::{
+    build::PlayerPlacedBlocks,
+    item_pickup::PickupMarker,
+    physics::{CollidesWithBlocks, GetsStuckOnCollision, Gravity, PhysicsMarker},
+};
 /// Strength of random velocity applied to the dropped item after breaking a block
 const BLOCK_BREAK_DROP_STRENGTH: f32 = 0.05 * 20.0;
 
@@ -57,6 +60,8 @@ fn break_blocks(
             continue;
         };
 
+        let mut broke_bed = false;
+
         for (team_name, bed_block_set) in &bedwars_config.beds {
             if *team_name == player_team.name {
                 continue;
@@ -84,50 +89,52 @@ fn break_blocks(
                         color: *victim_color,
                     },
                 });
+
+                broke_bed = true;
             }
         }
 
         if let Some(block_state) = player_placed_blocks.0.get(&block_pos) {
-            if block_state.to_kind().to_item_kind().is_bed() {
-                // extra logic for breaking beds
-            } else {
-                // we want to drop the item
-
-                let item_stack = ItemStack {
-                    item: block_state.to_kind().to_item_kind(),
-                    count: 1,
-                    nbt: None,
-                };
-
-                // the item should have some random
-                let mut rng = rand::thread_rng();
-
-                let position = DVec3 {
-                    x: block_pos.x as f64 + 0.5 + rng.gen_range(-0.1..0.1),
-                    y: block_pos.y as f64 + 0.5 + rng.gen_range(-0.1..0.1),
-                    z: block_pos.z as f64 + 0.5 + rng.gen_range(-0.1..0.1),
-                };
-
-                let item_velocity = Vec3 {
-                    x: rng.gen_range(-1.0..1.0),
-                    y: rng.gen_range(-1.0..1.0),
-                    z: rng.gen_range(-1.0..1.0),
-                } * BLOCK_BREAK_DROP_STRENGTH;
-
-                commands
-                    .spawn(ItemEntityBundle {
-                        item_stack: Stack(item_stack),
-                        position: Position(position),
-                        velocity: Velocity(item_velocity),
-
-                        layer: EntityLayerId(layer),
-                        entity_no_gravity: NoGravity(true),
-                        // entity_air
-                        ..Default::default()
-                    })
-                    .insert(DroppedItemsPickupTimer::default())
-                    .insert(DespawnTimer::from_secs(2.0));
+            if broke_bed {
+                continue;
             }
+
+            let item_stack = ItemStack {
+                item: block_state.to_kind().to_item_kind(),
+                count: 1,
+                nbt: None,
+            };
+
+            let mut rng = rand::thread_rng();
+
+            let position = DVec3 {
+                x: block_pos.x as f64 + 0.5 + rng.gen_range(-0.1..0.1),
+                y: block_pos.y as f64 + 0.5 + rng.gen_range(-0.1..0.1),
+                z: block_pos.z as f64 + 0.5 + rng.gen_range(-0.1..0.1),
+            };
+
+            let item_velocity = Vec3 {
+                x: rng.gen_range(-1.0..1.0),
+                y: rng.gen_range(-1.0..1.0),
+                z: rng.gen_range(-1.0..1.0),
+            } * BLOCK_BREAK_DROP_STRENGTH;
+
+            commands
+                .spawn(ItemEntityBundle {
+                    item_stack: Stack(item_stack),
+                    position: Position(position),
+                    velocity: Velocity(item_velocity),
+
+                    layer: EntityLayerId(layer),
+                    entity_no_gravity: NoGravity(true),
+                    ..Default::default()
+                })
+                .insert(PickupMarker::default())
+                .insert(Gravity::items())
+                .insert(PhysicsMarker)
+                .insert(CollidesWithBlocks(None))
+                .insert(GetsStuckOnCollision::ground())
+                .insert(DespawnTimer::items());
 
             layer_mut.set_block(block_pos, BlockState::AIR);
         }

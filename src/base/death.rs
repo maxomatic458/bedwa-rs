@@ -100,16 +100,28 @@ fn tick_respawn_timer(
 
 fn player_respawn(
     trigger: Trigger<OnRemove, IsDead>,
-    mut clients: Query<(&mut Position, &mut Health, &mut GameMode, &Team), Without<Spectator>>,
+    mut clients: Query<
+        (
+            &mut Position,
+            &mut Health,
+            &mut GameMode,
+            &Team,
+            &mut Equipment,
+        ),
+        Without<Spectator>,
+    >,
     bedwars_config: Res<BedwarsConfig>,
 ) {
-    let Ok((mut position, mut health, mut game_mode, team)) = clients.get_mut(trigger.entity())
+    let Ok((mut position, mut health, mut game_mode, team, mut equipment)) =
+        clients.get_mut(trigger.entity())
     else {
         return;
     };
 
     health.0 = 20.0;
     *game_mode = GameMode::Survival;
+
+    equipment.set_changed();
 
     let team_spawn_pos = bedwars_config.spawns.get(&team.name).unwrap();
     position.set(DVec3::new(

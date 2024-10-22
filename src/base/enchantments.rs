@@ -10,6 +10,9 @@ pub enum Enchantment {
     Sharpness,
     Knockback,
     Protection,
+    Power,
+    Punch,
+    Infinity,
 }
 
 impl Enchantment {
@@ -18,6 +21,9 @@ impl Enchantment {
             "minecraft:sharpness" => Some(Enchantment::Sharpness),
             "minecraft:knockback" => Some(Enchantment::Knockback),
             "minecraft:protection" => Some(Enchantment::Protection),
+            "minecraft:power" => Some(Enchantment::Power),
+            "minecraft:punch" => Some(Enchantment::Punch),
+            "minecraft:infinity" => Some(Enchantment::Infinity),
             _ => None,
         }
     }
@@ -40,6 +46,11 @@ pub fn knockback_extra_range(level: u32) -> f32 {
 /// Calculates the damage reduction given by the protection enchantment.
 pub fn protection_reduction(level: u32) -> f32 {
     level as f32 * 0.04
+}
+
+/// Calculates the extra damage given by the power enchantment.
+pub fn power_extra_dmg(level: u32) -> f32 {
+    level as f32 * 0.5 + 0.5
 }
 
 pub trait ItemStackExtEnchantments {

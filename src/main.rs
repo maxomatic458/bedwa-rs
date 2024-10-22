@@ -1,8 +1,9 @@
 use base::{
-    armor_right_click_equip::ArmorRightClickEquipPlugin, break_blocks::BlockBreakPlugin,
-    build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin, death::DeathPlugin,
-    drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin, item_pickup::ItemPickupPlugin,
-    regeneration::RegenerationPlugin, scoreboard::ScoreboardPlugin, void_death::VoidDeathPlugin,
+    armor_right_click_equip::ArmorRightClickEquipPlugin, bow::BowPlugin,
+    break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin,
+    death::DeathPlugin, drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin,
+    item_pickup::ItemPickupPlugin, physics::PhysicsPlugin, regeneration::RegenerationPlugin,
+    scoreboard::ScoreboardPlugin, utils::debug::DebugPlugin, void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -71,6 +72,11 @@ fn main() {
     std::env::set_var("RUST_LOG", "debug");
 
     App::new()
+        .insert_resource(NetworkSettings {
+            connection_mode: ConnectionMode::Offline,
+            // callbacks: MyCallbacks.into(),
+            ..Default::default()
+        })
         .add_plugins(StatesPlugin)
         .add_plugins(ChatPlugin)
         .add_plugins(SpectatorPlugin)
@@ -90,6 +96,8 @@ fn main() {
         .add_plugins(ShopPlugin)
         .add_plugins(ItemPickupPlugin)
         .add_plugins(RegenerationPlugin)
+        .add_plugins(BowPlugin)
+        .add_plugins(PhysicsPlugin)
         // .add_plugins(ItemEntityPlugin)
         .add_plugins(DespawnTimerPlugin)
         .add_plugins(ItemDropPlugin)
@@ -105,6 +113,8 @@ fn main() {
                 update_last_tick_time,
             ),
         )
+        // DEBUG
+        .add_plugins(DebugPlugin)
         .add_command::<BedwarsAdminCommand>()
         .insert_resource(LastTickTime::default())
         .run();

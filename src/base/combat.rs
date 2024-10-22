@@ -1,17 +1,24 @@
 use bevy_ecs::query::QueryData;
 use bevy_state::prelude::in_state;
 use valence::{
-    entity::{EntityId, EntityStatuses},
+    entity::{living::StuckArrowCount, EntityId, EntityStatuses, Velocity},
     inventory::HeldItem,
     prelude::*,
+    protocol::{sound::SoundCategory, Sound},
 };
 
-use crate::{utils::item_stack::ItemStackExtWeapons, GameState, Team};
+use crate::{
+    base::enchantments::{Enchantment, ItemStackExtEnchantments},
+    utils::item_stack::ItemStackExtWeapons,
+    GameState, Team,
+};
 
 use super::{
     armor::EquipmentExtDamageReduction,
+    bow::{ArrowOwner, ArrowPower, BowUsed},
     death::{IsDead, PlayerHurtEvent},
     fall_damage::FallingState,
+    physics::EntityEntityCollisionEvent,
 };
 
 const ATTACK_COOLDOWN_TICKS: i64 = 10;
@@ -38,8 +45,8 @@ pub struct CombatPlugin;
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
-            EventLoopUpdate,
-            combat_system.run_if(in_state(GameState::Match)),
+            Update,
+            (combat_system, arrow_hits).run_if(in_state(GameState::Match)),
         );
     }
 }
@@ -49,7 +56,7 @@ impl Plugin for CombatPlugin {
 struct CombatQuery {
     client: &'static mut Client,
     entity_id: &'static EntityId,
-    pos: &'static Position,
+    position: &'static Position,
     state: &'static mut CombatState,
     statuses: &'static mut EntityStatuses,
     inventory: &'static Inventory,
@@ -58,6 +65,7 @@ struct CombatQuery {
     equipment: &'static Equipment,
     team: &'static Team,
     entity: Entity,
+    stuck_arrow_count: &'static mut StuckArrowCount,
 }
 
 fn combat_system(
@@ -100,7 +108,9 @@ fn combat_system(
         attacker.state.last_attacked_tick = server.current_tick();
         victim.state.last_hit_tick = server.current_tick();
 
-        let dir = (victim.pos.0 - attacker.pos.0).normalize().as_vec3();
+        let dir = (victim.position.0 - attacker.position.0)
+            .normalize()
+            .as_vec3();
 
         let xz_knockback = if attacker.state.is_sprinting {
             KNOCKBACK_SPEED_XY
@@ -140,7 +150,61 @@ fn combat_system(
             attacker: Some(attacker.entity),
             victim: victim.entity,
             damage: damage_after_armor,
-            position: victim.pos.0,
+            position: victim.position.0,
         });
+    }
+}
+
+fn arrow_hits(
+    mut commands: Commands,
+    mut events: EventReader<EntityEntityCollisionEvent>,
+    arrows: Query<(&Velocity, &ArrowPower, &ArrowOwner, &BowUsed)>,
+    mut clients: Query<CombatQuery>,
+    mut event_writer: EventWriter<PlayerHurtEvent>,
+) {
+    for event in events.read() {
+        let Ok((arrow_velocity, arrow_power, arrow_owner, bow_used)) = arrows.get(event.entity1)
+        else {
+            continue;
+        };
+
+        tracing::info!("Owner: {:?}", arrow_owner);
+
+        tracing::info!("event: {:?}", event);
+
+        let Ok(mut attacker) = clients.get_mut(arrow_owner.0) else {
+            continue;
+        };
+
+        attacker.client.play_sound(
+            Sound::EntityArrowHitPlayer,
+            SoundCategory::Player,
+            attacker.position.0,
+            1.0,
+            1.0,
+        );
+
+        let Ok(victim) = clients.get_mut(event.entity2) else {
+            continue;
+        };
+
+        let power_level = bow_used
+            .0
+            .enchantments()
+            .get(&Enchantment::Power)
+            .copied()
+            .unwrap_or(0);
+
+        let damage = arrow_power.damage(**arrow_velocity, power_level);
+        let damage_after_armor = victim.equipment.received_damage(damage);
+
+        event_writer.send(PlayerHurtEvent {
+            attacker: Some(arrow_owner.0),
+            victim: victim.entity,
+            damage: damage_after_armor,
+            position: victim.position.0,
+        });
+
+        commands.entity(event.entity1).insert(Despawned);
     }
 }
