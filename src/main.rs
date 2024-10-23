@@ -10,7 +10,7 @@ use bevy_time::{Time, TimePlugin};
 use colors::TeamColor;
 use commands::bedwars_admin::{handle_bedwars_admin_command, BedwarsAdminCommand};
 use edit::EditPlugin;
-use lobby::LobbyPlugin;
+use lobby::{LobbyPlayerState, LobbyPlugin};
 use menu::ItemMenuPlugin;
 use r#match::MatchPlugin;
 use resource_spawners::ResourceSpawnerPlugin;
@@ -25,6 +25,7 @@ pub mod bedwars_config;
 pub mod colors;
 pub mod commands;
 pub mod edit;
+pub mod items;
 pub mod lobby;
 pub mod r#match;
 pub mod menu;
@@ -41,8 +42,8 @@ pub struct LobbyPlayer;
 pub struct Spectator;
 
 /// A component that will be attached to players that are still playing
-#[derive(Debug, Default, Component)]
-pub struct ActivePlayer;
+// #[derive(Debug, Default, Component)]
+// pub struct ActivePlayer;
 
 /// A component that will be attached to players that are editing the map
 #[derive(Debug, Default, Component)]
@@ -60,11 +61,11 @@ enum GameState {
     #[default]
     Lobby,
     Match,
-    // PostMatch,
+    PostMatch,
     Edit,
 }
 
-/// The time the last tick took
+// Time stamp when the last tick finished
 #[derive(Debug, Default, Resource)]
 pub struct LastTickTime(pub std::time::Duration);
 
@@ -111,12 +112,14 @@ fn main() {
                 init_clients,
                 handle_bedwars_admin_command,
                 update_last_tick_time,
+                despawn_disconnected_clients,
             ),
         )
         // DEBUG
         .add_plugins(DebugPlugin)
         .add_command::<BedwarsAdminCommand>()
         .insert_resource(LastTickTime::default())
+        .observe(on_disconnect)
         .run();
 }
 
@@ -136,11 +139,11 @@ fn setup(
     let wip_config = {
         if let Ok(config) = bedwars_config::load_config() {
             commands.insert_resource(config.clone());
-            bedwars_config::BedwarsWIPConfig::from_saved_config(&config)
+            bedwars_config::WIPWorldConfig::from_saved_config(&config)
         } else {
             tracing::warn!("No bedwars config found, enabling edit mode");
             state.set(GameState::Edit);
-            bedwars_config::BedwarsWIPConfig::default()
+            bedwars_config::WIPWorldConfig::default()
         }
     };
 
@@ -178,26 +181,39 @@ fn init_clients(
         visible_chunk_layer.0 = layer;
         visible_entity_layers.0.insert(layer);
 
-        // if let Some(ref config) = bedwars_config {
         match state.get() {
             GameState::Lobby => {
                 commands.entity(entity).insert(LobbyPlayer);
             }
-            GameState::Match => {
+            GameState::Match | GameState::PostMatch => {
                 commands.entity(entity).insert(Spectator);
             }
             GameState::Edit => {
                 commands.entity(entity).insert(Editor);
             } // _ => {}
         };
-        // } else {
-        //     pos.set([0.5, 128.0, 0.5]);
-        //     *game_mode = GameMode::Creative;
-        //     scopes.add("bedwars.command.bw-admin");
-        //     client.send_chat_message(
-        //         "§cThe bedwars config is not loaded, you are currently in the edit mode.",
-        //     );
-        // }
+    }
+}
+
+fn on_disconnect(
+    trigger: Trigger<OnRemove, Client>,
+    query: Query<&Username>,
+    // commands: Commands,
+    game_state: Res<State<GameState>>,
+    mut lobby_state: Option<ResMut<LobbyPlayerState>>,
+    // match_state: Option<ResMut<MatchState>>,
+) {
+    let Ok(username) = query.get(trigger.entity()) else {
+        return;
+    };
+
+    tracing::info!("Player {} disconnected", username);
+
+    if game_state.get() == &GameState::Lobby {
+        if let Some(lobby_state) = lobby_state.as_mut() {
+            lobby_state.players.remove(&username.0);
+            lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
+        }
     }
 }
 

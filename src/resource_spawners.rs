@@ -19,7 +19,7 @@ use crate::{
             CollidesWithBlocks, GetsStuckOnCollision, Gravity, PhysicsMarker, SimPhysicsForTime,
         },
     },
-    bedwars_config::BedwarsConfig,
+    bedwars_config::WorldConfig,
     r#match::MatchState,
     utils::block::get_block_center,
     GameState, Team,
@@ -46,7 +46,7 @@ struct ResourceSpawner {
     timer: Timer,
 }
 
-fn init_resource_spawners(mut commands: Commands, bedwars_config: Res<BedwarsConfig>) {
+fn init_resource_spawners(mut commands: Commands, bedwars_config: Res<WorldConfig>) {
     for (pos, ser_item_stack, interval_sec, team_name) in &bedwars_config.resource_spawners {
         let spawner_ent = commands
             .spawn(ResourceSpawnerBundle {

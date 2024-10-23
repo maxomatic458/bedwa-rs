@@ -13,6 +13,8 @@ pub enum Enchantment {
     Power,
     Punch,
     Infinity,
+    FireAspect,
+    Flame,
 }
 
 impl Enchantment {
@@ -24,6 +26,8 @@ impl Enchantment {
             "minecraft:power" => Some(Enchantment::Power),
             "minecraft:punch" => Some(Enchantment::Punch),
             "minecraft:infinity" => Some(Enchantment::Infinity),
+            "minecraft:fire_aspect" => Some(Enchantment::FireAspect),
+            "minecraft:flame" => Some(Enchantment::Flame),
             _ => None,
         }
     }
@@ -51,6 +55,17 @@ pub fn protection_reduction(level: u32) -> f32 {
 /// Calculates the extra damage given by the power enchantment.
 pub fn power_extra_dmg(level: u32) -> f32 {
     level as f32 * 0.5 + 0.5
+}
+
+/// Get the burn time in seconds of an item stack via the fire aspect enchantment.
+pub fn fire_aspect_burn_time(level: u32) -> f32 {
+    level as f32 * 4.0
+}
+
+/// Get the burn time in seconds of an item stack via the flame enchantment.
+/// in vanilla flame 1 is the cap
+pub fn flame_burn_time(level: u32) -> f32 {
+    level as f32 * 5.0
 }
 
 pub trait ItemStackExtEnchantments {

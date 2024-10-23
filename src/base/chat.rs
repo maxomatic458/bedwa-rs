@@ -2,7 +2,10 @@ use bevy_ecs::query::QueryData;
 use bevy_state::prelude::in_state;
 use valence::prelude::*;
 
-use crate::{r#match::MatchState, GameState, Team};
+use crate::{
+    r#match::{EndMatch, MatchState, POST_MATCH_TIME_SECS},
+    GameState, Team,
+};
 
 use super::{break_blocks::BedDestroyedEvent, death::PlayerDeathEvent};
 
@@ -12,7 +15,8 @@ impl Plugin for ChatPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (handle_death_message, handle_bed_destroyed).run_if(in_state(GameState::Match)),
+            (handle_death_message, handle_bed_destroyed, handle_match_end)
+                .run_if(in_state(GameState::Match)),
         );
     }
 }
@@ -47,7 +51,7 @@ fn handle_death_message(
 
             let msg = if victim_eliminated {
                 format!(
-                    "{}{} §awas eliminated by {}{}",
+                    "{}§n{}§r §awas eliminated by {}{}",
                     victim.team.color.text_color(),
                     victim.username,
                     attacker.team.color.text_color(),
@@ -55,7 +59,7 @@ fn handle_death_message(
                 )
             } else {
                 format!(
-                    "{}{} §awas killed by {}{}",
+                    "{}§n{}§r §awas killed by {}{}",
                     victim.team.color.text_color(),
                     victim.username,
                     attacker.team.color.text_color(),
@@ -64,25 +68,25 @@ fn handle_death_message(
             };
 
             for mut client in &mut chat_query {
-                client.client.send_chat_message(msg.clone());
+                client.client.send_chat_message(&msg);
             }
         } else {
             let msg = if victim_eliminated {
                 format!(
-                    "{}{} §awas eliminated",
+                    "{}§n{}§r §awas eliminated",
                     victim.team.color.text_color(),
                     victim.username
                 )
             } else {
                 format!(
-                    "{}{} §adied",
+                    "{}§n{}§r §adied",
                     victim.team.color.text_color(),
                     victim.username
                 )
             };
 
             for mut client in &mut chat_query {
-                client.client.send_chat_message(msg.clone());
+                client.client.send_chat_message(&msg);
             }
         }
     }
@@ -92,13 +96,36 @@ fn handle_bed_destroyed(mut clients: Query<ChatQuery>, mut events: EventReader<B
     for event in events.read() {
         let team = &event.team;
         let msg = format!(
-            "§aBed of team {}{} §awas destroyed!",
+            "§aBed of team {}§n{}§r §awas destroyed!",
             team.color.text_color(),
             team.name
         );
 
         for mut client in &mut clients {
-            client.client.send_chat_message(msg.clone());
+            client.client.send_chat_message(&msg);
+        }
+    }
+}
+
+fn handle_match_end(mut clients: Query<ChatQuery>, mut events: EventReader<EndMatch>) {
+    for event in events.read() {
+        let team = &event.winner;
+
+        let msg = format!(
+            "§bTeam {}§n{}§r §bwon the match!",
+            team.color.text_color(),
+            team.name
+        );
+
+        let return_to_lobby_msg = format!(
+            "§eReturning to lobby in {} seconds...",
+            POST_MATCH_TIME_SECS.round() as i32
+        );
+
+        for mut client in &mut clients {
+            tracing::info!("Sending chat message to {}", client.username.0);
+            client.client.send_chat_message(&msg);
+            client.client.send_chat_message(&return_to_lobby_msg);
         }
     }
 }

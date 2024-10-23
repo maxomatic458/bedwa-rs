@@ -19,6 +19,8 @@ pub trait ItemKindExtArmor {
     fn is_armor(&self) -> bool;
     /// The sound when the item is equipped
     fn equip_sound(&self) -> Option<Sound>;
+    /// The knockback resistance of the item
+    fn knockback_resistance(&self) -> f32;
 }
 
 impl ItemKindExtArmor for ItemKind {
@@ -153,6 +155,16 @@ impl ItemKindExtArmor for ItemKind {
             _ => None,
         }
     }
+
+    fn knockback_resistance(&self) -> f32 {
+        match self {
+            ItemKind::NetheriteBoots
+            | ItemKind::NetheriteChestplate
+            | ItemKind::NetheriteHelmet
+            | ItemKind::NetheriteLeggings => 0.1,
+            _ => 0.0,
+        }
+    }
 }
 
 /// Calculates the final damage
@@ -167,7 +179,7 @@ fn calculate_damage_armor(damage: f32, armor_points: f32, toughness: f32) -> f32
     damage.max(0.0)
 }
 
-pub trait EquipmentExtDamageReduction {
+pub trait EquipmentExtReduction {
     /// Calculate the real damage the player will receive after
     /// accounting for armor points, toughness, and enchantments.
     fn received_damage(&self, damage: f32) -> f32;
@@ -177,9 +189,11 @@ pub trait EquipmentExtDamageReduction {
     fn toughness(&self) -> f32;
     /// Get the reduction of protection enchantments
     fn protection_reduction(&self) -> f32;
+    /// Knockback resistance
+    fn knockback_resistance(&self) -> f32;
 }
 
-impl EquipmentExtDamageReduction for Equipment {
+impl EquipmentExtReduction for Equipment {
     fn received_damage(&self, damage: f32) -> f32 {
         let armor_points = self.armor_points();
         let toughness = self.toughness();
@@ -209,6 +223,13 @@ impl EquipmentExtDamageReduction for Equipment {
             + self.chest().protection_reduction()
             + self.legs().protection_reduction()
             + self.feet().protection_reduction()
+    }
+
+    fn knockback_resistance(&self) -> f32 {
+        self.head().item.knockback_resistance()
+            + self.chest().item.knockback_resistance()
+            + self.legs().item.knockback_resistance()
+            + self.feet().item.knockback_resistance()
     }
 }
 

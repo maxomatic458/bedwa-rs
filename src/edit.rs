@@ -13,7 +13,7 @@ use valence::{
 };
 
 use crate::{
-    bedwars_config::BedwarsWIPConfig,
+    bedwars_config::WIPWorldConfig,
     commands::bedwars_admin::{
         add_shop_command, set_lobby_spawn_command, set_spectator_spawn_command,
         set_team_bed_command, set_team_spawn_command,
@@ -152,7 +152,7 @@ fn edit_right_click(
     mut commands: Commands,
     mut clients: Query<(&mut Client, &HeldItem), With<Editor>>,
     mut events: EventReader<InteractItemEvent>,
-    wip_config: Res<BedwarsWIPConfig>,
+    wip_config: Res<WIPWorldConfig>,
 ) {
     for event in events.read() {
         let Ok((mut client, held_item)) = clients.get_mut(event.client) else {
@@ -169,7 +169,7 @@ fn open_team_selection_menu(
     commands: &mut Commands,
     player_ent: Entity,
     client: &mut Client,
-    wip_config: &BedwarsWIPConfig,
+    wip_config: &WIPWorldConfig,
 ) {
     if wip_config.teams.is_empty() {
         client.send_chat_message("§4There are no teams available!");
@@ -227,7 +227,7 @@ fn on_change_team_mode(
     mut commands: Commands,
     mut clients: Query<(Entity, &mut Client, &mut Inventory, &Position), With<Editor>>,
     mut events: EventReader<MenuItemSelectEvent>,
-    wip_config: Res<BedwarsWIPConfig>,
+    wip_config: Res<WIPWorldConfig>,
 ) {
     for event in events.read() {
         let Ok((player_ent, mut client, mut inventory, position)) = clients.get_mut(event.client)
@@ -341,7 +341,7 @@ fn edit_click_block(
     mut clients: Query<(&mut Client, &mut Inventory, &Look, &HeldItem, Option<&Team>)>,
     mut events: EventReader<InteractBlockEvent>,
     mut layers: Query<&mut ChunkLayer>,
-    mut wip_config: ResMut<BedwarsWIPConfig>,
+    mut wip_config: ResMut<WIPWorldConfig>,
 ) {
     for event in events.read() {
         let Ok((client, mut inventory, look, held_item, team)) = clients.get_mut(event.client)

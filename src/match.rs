@@ -2,32 +2,47 @@ use std::collections::HashMap;
 
 use bevy_ecs::{
     entity::Entity,
-    event::EventReader,
+    event::{Event, EventReader, EventWriter},
+    query::With,
     system::{Commands, Query, Res, ResMut},
+    world::OnRemove,
 };
-use bevy_state::{prelude::in_state, state::OnEnter};
+use bevy_state::{
+    prelude::in_state,
+    state::{NextState, OnEnter},
+};
+use bevy_time::{Time, Timer, TimerMode};
 use valence::{
     app::{Plugin, Update},
     client::{Client, Username},
-    entity::Position,
+    entity::{item::Stack, Position},
     equipment::EquipmentInventorySync,
     math::DVec3,
     message::SendMessage,
-    prelude::{Equipment, IntoSystemConfigs, Inventory, Resource},
+    player_list::DisplayName,
+    prelude::{Block, DetectChanges, Equipment, IntoSystemConfigs, Inventory, Resource, Trigger},
     protocol::{sound::SoundCategory, Sound},
     title::SetTitle,
-    ChunkLayer, GameMode, ItemKind, ItemStack,
+    BlockPos, BlockState, ChunkLayer, Despawned, GameMode, ItemKind, ItemStack,
 };
 
 use crate::{
     base::{
-        break_blocks::BedDestroyedEvent, combat::CombatState, death::PlayerDeathEvent,
-        fall_damage::FallingState, physics::CollidableForEntities,
+        break_blocks::BedDestroyedEvent,
+        build::PlayerPlacedBlocks,
+        combat::CombatState,
+        death::{IsDead, PlayerDeathEvent},
+        fall_damage::FallingState,
+        physics::CollidableForEntities,
+        scoreboard::BedwarsScoreboard,
     },
-    bedwars_config::BedwarsConfig,
+    bedwars_config::WorldConfig,
     utils::inventory::InventoryExt,
-    GameState, Team,
+    GameState, LobbyPlayer, Spectator, Team,
 };
+
+/// Time to wait before sending all the players back to the lobby after the match ends.
+pub const POST_MATCH_TIME_SECS: f32 = 10.0;
 
 #[derive(Debug, Clone, Resource)]
 pub struct MatchState {
@@ -68,6 +83,15 @@ pub struct TeamState {
     pub bed_destroyed: bool,
 }
 
+#[derive(Debug, Clone, Resource)]
+struct PostMatchTimer(pub Timer);
+
+impl Default for PostMatchTimer {
+    fn default() -> Self {
+        Self(Timer::from_seconds(POST_MATCH_TIME_SECS, TimerMode::Once))
+    }
+}
+
 pub struct MatchPlugin;
 
 impl Plugin for MatchPlugin {
@@ -76,10 +100,15 @@ impl Plugin for MatchPlugin {
             .add_systems(
                 Update,
                 (on_bed_destroy, on_player_death).run_if(in_state(GameState::Match)),
-            );
-        // app.add_systems(Update, (
-
-        // ))
+            )
+            .add_event::<EndMatch>()
+            .add_systems(Update, (on_end_match,).run_if(in_state(GameState::Match)))
+            .add_systems(OnEnter(GameState::PostMatch), (on_enter_post_match,))
+            .add_systems(
+                Update,
+                (tick_postmatch_timer,).run_if(in_state(GameState::PostMatch)),
+            )
+            .observe(on_remove_team);
     }
 }
 
@@ -94,7 +123,7 @@ fn start_match(
         &Username,
         &Team,
     )>,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
 ) {
     tracing::info!("Starting match");
 
@@ -145,7 +174,7 @@ fn on_bed_destroy(
     mut events: EventReader<BedDestroyedEvent>,
     mut layer: Query<&mut ChunkLayer>,
     mut match_state: ResMut<MatchState>,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
 ) {
     for event in events.read() {
         for (mut client, team) in &mut clients {
@@ -167,7 +196,7 @@ fn on_bed_destroy(
         layer.play_sound(
             Sound::EntityHorseDeath,
             SoundCategory::Master,
-            Into::<DVec3>::into(bed_pos[0].clone()),
+            Into::<DVec3>::into(bed_pos[0].0.clone()),
             1.0,
             1.0,
         );
@@ -203,4 +232,131 @@ fn on_player_death(
             attacker_stats.kills += 1;
         }
     }
+}
+
+#[derive(Debug, Clone, Event)]
+pub struct EndMatch {
+    pub winner: Team,
+}
+
+fn on_end_match(
+    // commands: Commands,
+    match_state: ResMut<MatchState>,
+    bedwars_config: Res<WorldConfig>,
+    mut clients: Query<(Entity, &mut Client, &Position, &Team), With<Client>>,
+    mut event_writer: EventWriter<EndMatch>,
+    mut state: ResMut<NextState<GameState>>,
+) {
+    if !match_state.is_changed() {
+        return;
+    }
+
+    let teams_left = match_state
+        .teams
+        .iter()
+        .filter(|(_, team)| !team.players_alive.is_empty())
+        .count();
+
+    // DEBUG
+    if teams_left >= 1 {
+        return;
+    }
+
+    let winner = match_state
+        .teams
+        .iter()
+        .find(|(_, team)| !team.players_alive.is_empty())
+        .map(|(name, _)| bedwars_config.teams.get_key_value(name).unwrap())
+        .unwrap();
+
+    event_writer.send(EndMatch {
+        winner: Team {
+            name: winner.0.to_string(),
+            color: *winner.1,
+        },
+    });
+
+    for (_ent, mut client, position, team) in &mut clients {
+        if team.name == *winner.0 {
+            client.play_sound(
+                Sound::EntityPlayerLevelup,
+                SoundCategory::Player,
+                position.0,
+                0.75,
+                1.0,
+            );
+        }
+    }
+
+    state.set(GameState::PostMatch);
+}
+
+fn on_enter_post_match(mut commands: Commands) {
+    commands.insert_resource(PostMatchTimer::default());
+}
+
+#[allow(clippy::too_many_arguments)]
+fn tick_postmatch_timer(
+    mut commands: Commands,
+    mut players: Query<(Entity, &Client)>,
+    mut timer: ResMut<PostMatchTimer>,
+    mut state: ResMut<NextState<GameState>>,
+    scoreboard: Query<Entity, With<BedwarsScoreboard>>,
+    items: Query<Entity, With<Stack>>,
+    player_placed_blocks: ResMut<PlayerPlacedBlocks>,
+    mut layer: Query<&mut ChunkLayer>,
+    time: Res<Time>,
+    bedwars_config: Res<WorldConfig>,
+) {
+    timer.0.tick(time.delta());
+
+    if !timer.0.finished() {
+        return;
+    }
+    for (ent, _client) in &mut players {
+        commands
+            .entity(ent)
+            .remove::<CombatState>()
+            .remove::<FallingState>()
+            .remove::<Equipment>()
+            .remove::<CollidableForEntities>()
+            .remove::<EquipmentInventorySync>()
+            .remove::<Team>()
+            .remove::<IsDead>()
+            .remove::<Spectator>()
+            .insert(LobbyPlayer);
+    }
+
+    for scoreboard in &mut scoreboard.iter() {
+        commands.entity(scoreboard).insert(Despawned);
+    }
+
+    let mut layer = layer.single_mut();
+
+    for block_pos in player_placed_blocks.0.iter() {
+        layer.set_block(*block_pos.0, BlockState::AIR);
+    }
+
+    // Despawn items
+    for item in &mut items.iter() {
+        commands.entity(item).insert(Despawned);
+    }
+
+    // Replace beds
+    for (_, bed_blocks_map) in bedwars_config.beds.iter() {
+        for (pos, block) in bed_blocks_map.iter() {
+            let block_pos = BlockPos::new(pos.x, pos.y, pos.z);
+            layer.set_block(block_pos, Block::from(block.clone()));
+        }
+    }
+
+    state.set(GameState::Lobby);
+}
+
+fn on_remove_team(trigger: Trigger<OnRemove, Team>, mut clients: Query<&mut DisplayName>) {
+    let Ok(mut display_name) = clients.get_mut(trigger.entity()) else {
+        return;
+    };
+
+    display_name.0 = None;
 }

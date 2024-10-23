@@ -2,7 +2,7 @@
   "shop_items": {
     "Blocks": [
       {
-        "item": "stone",
+        "item": "white_wool",
         "count": 1,
         "nbt": {
           "display": {
@@ -18,7 +18,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"1 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                  "{\"text\":\"1 Bronze\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"yellow\"}'}}"
                 ]
               }
             }
@@ -26,24 +26,6 @@
           "price": {
             "item": "brick",
             "count": 1,
-            "nbt": null
-          }
-        },
-        {
-          "offer": {
-            "item": "oak_planks",
-            "count": 4,
-            "nbt": {
-              "display": {
-                "Lore": [
-                  "{\"text\":\"3 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
-                ]
-              }
-            }
-          },
-          "price": {
-            "item": "brick",
-            "count": 3,
             "nbt": null
           }
         },
@@ -54,7 +36,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"1 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                  "{\"text\":\"1 Iron\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"dark_gray\"}'}}"
                 ]
               }
             }
@@ -62,6 +44,24 @@
           "price": {
             "item": "iron_ingot",
             "count": 1,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "oak_planks",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"3 Iron\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"dark_gray\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "iron_ingot",
+            "count": 3,
             "nbt": null
           }
         }
@@ -73,7 +73,7 @@
         "count": 1,
         "nbt": {
           "display": {
-            "Name": "{\"text\":\"Weapons\", \"italic\": \"false\"}'}}"
+            "Name": "{\"text\":\"Armor\", \"italic\": \"false\"}'}}"
           }
         }
       },
@@ -91,7 +91,7 @@
               ],
               "display": {
                 "Lore": [
-                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"yellow\"}'}}"
                 ]
               }
             }
@@ -115,7 +115,7 @@
               ],
               "display": {
                 "Lore": [
-                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"yellow\"}'}}"
                 ]
 
               }
@@ -134,13 +134,13 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"5 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                  "{\"text\":\"2 Iron\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"dark_gray\"}'}}"
                 ]
               }
             }
           },
           "price": {
-            "item": "brick",
+            "item": "iron_ingot",
             "count": 5,
             "nbt": null
           }
@@ -150,23 +150,70 @@
             "item": "leather_helmet",
             "count": 1,
             "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"yellow\"}'}}"
+                ]
+              },
               "Enchantments": [
                 {
                   "id": "minecraft:protection",
                   "lvl": 2
                 }
-              ],
-              "display": {
-                "Lore": [
-                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
-                ]
-
-              }
+              ]
             }
           },
           "price": {
             "item": "brick",
             "count": 2,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "iron_helmet",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"1 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:protection",
+                  "lvl": 2
+                }
+              ]
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 1,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "diamond_helmet",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"10 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:protection",
+                  "lvl": 2
+                }
+              ]
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 10,
             "nbt": null
           }
         }
@@ -190,7 +237,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"10 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                  "{\"text\":\"10 Bronze\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"yellow\"}'}}"
                 ]
               }
             }
@@ -208,7 +255,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"8 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
+                  "{\"text\":\"8 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
                 ]
               },
               "Enchantments": [
@@ -232,7 +279,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"5 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                  "{\"text\":\"5 Bronze\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"yellow\"}'}}"
                 ]
               }
             }
@@ -250,7 +297,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"dark_gray\"}'}}"
                 ]
               },
               "Enchantments": [
@@ -274,7 +321,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"5 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
+                  "{\"text\":\"5 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
                 ]
               }
             }
@@ -305,7 +352,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"color\": \"yellow\"}'}}"
+                  "{\"text\":\"2 Bronze\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"yellow\"}'}}"
                 ]
               },
               "Enchantments": [
@@ -329,7 +376,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"1 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                  "{\"text\":\"1 Iron\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"dark_gray\"}'}}"
                 ]
               }
             }
@@ -347,7 +394,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"dark_gray\"}'}}"
                 ]
               },
               "Enchantments": [
@@ -360,7 +407,7 @@
           },
           "price": {
             "item": "iron_ingot",
-            "count": 3,
+            "count": 5,
             "nbt": null
           }
         },
@@ -371,7 +418,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"5 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
+                  "{\"text\":\"5 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
                 ]
               },
               "Enchantments": [
@@ -385,6 +432,38 @@
           "price": {
             "item": "gold_ingot",
             "count": 5,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "diamond_sword",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"10 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:sharpness",
+                  "lvl": 1
+                },
+                {
+                  "id": "minecraft:fire_aspect",
+                  "lvl": 1
+                },
+                {
+                  "id": "minecraft:knockback",
+                  "lvl": 1
+                }
+              ]
+            }  
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 10,
             "nbt": null
           }
         }
@@ -408,7 +487,7 @@
             "nbt": {
               "display": {
                 "Lore": [
-                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"color\": \"gray\"}'}}"
+                  "{\"text\":\"5 Iron\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"dark_gray\"}'}}"
                 ]
               }
             }
@@ -424,21 +503,17 @@
             "item": "bow",
             "count": 1,
             "nbt": {
-              "display": {
-                "Lore": [
-                  "{\"text\":\"4 Gold\", \"italic\": \"false\", \"color\": \"gold\"}'}}"
-                ]
-              },
               "Enchantments": [
-                {
-                  "id": "minecraft:power",
-                  "lvl": 69
-                },
                 {
                   "id": "minecraft:infinity",
                   "lvl": 1
                 }
-              ]
+              ],
+              "display": {
+                "Lore": [
+                  "{\"text\":\"4 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              }
             }
           },
           "price": {
@@ -446,7 +521,117 @@
             "count": 4,
             "nbt": null
           }
+        },
+        {
+          "offer": {
+            "item": "bow",
+            "count": 1,
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:infinity",
+                  "lvl": 1
+                },
+                {
+                  "id": "minecraft:punch",
+                  "lvl": 1
+                }
+              ],
+              "display": {
+                "Lore": [
+                  "{\"text\":\"8 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 8,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "bow",
+            "count": 1,
+            "nbt": {
+              "Enchantments": [
+                {
+                  "id": "minecraft:infinity",
+                  "lvl": 1
+                },
+                {
+                  "id": "minecraft:punch",
+                  "lvl": 1
+                },
+                {
+                  "id": "minecraft:punch",
+                  "lvl": 1
+                }
+              ],
+              "display": {
+                "Lore": [
+                  "{\"text\":\"10 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 10,
+            "nbt": null
+          }
+        },
+        {
+          "offer": {
+            "item": "bow",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"15 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              },
+              "Enchantments": [
+                {
+                  "id": "minecraft:infinity",
+                  "lvl": 1
+                },
+                {
+                  "id": "minecraft:punch",
+                  "lvl": 2
+                },
+                {
+                  "id": "minecraft:punch",
+                  "lvl": 2
+                },
+                {
+                  "id": "minecraft:flame",
+                  "lvl": 1
+                }
+              ]
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 15,
+            "nbt": null
+          }
         }
+      ]
+    ],
+    "Special": [
+      {
+        "item": "tnt",
+        "count": 1,
+        "nbt": {
+          "display": {
+            "Name": "{\"text\":\"Special items\", \"italic\": \"false\"}'}}"
+          }
+        }
+      },
+      [
+        
       ]
     ]
   }

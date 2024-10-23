@@ -13,6 +13,7 @@ use valence::{
 
 use crate::{
     base::{
+        combat::{EYE_HEIGHT, SNEAK_EYE_HEIGHT},
         enchantments::{Enchantment, ItemStackExtEnchantments},
         physics::TerminalVelocity,
     },
@@ -20,6 +21,7 @@ use crate::{
 };
 
 use super::{
+    combat::CombatState,
     enchantments::power_extra_dmg,
     physics::{
         CollidesWithBlocks, CollidesWithEntities, Drag, EntityBlockCollisionEvent,
@@ -68,9 +70,10 @@ impl ArrowPower {
         damage as f32
     }
 
-    // pub fn knockback(&self, velocity_mps: Vec3, knockback_lvl: u32) -> Vec3 {
-
-    // }
+    pub fn knockback_extra(&self, mut velocity_mps: Vec3, punch_level: u32) -> Vec3 {
+        velocity_mps.y = 0.0;
+        velocity_mps.normalize() * punch_level as f32 * 0.6
+    }
 }
 
 #[derive(Component)]
@@ -178,7 +181,7 @@ fn on_bow_release(
 }
 
 fn on_shoot(
-    mut shooter: Query<(&mut Inventory, &EntityLayerId)>,
+    mut shooter: Query<(&mut Inventory, &EntityLayerId, &CombatState)>,
     mut commands: Commands,
     mut shoot_events: EventReader<BowShootEvent>,
     mut layer: Query<&mut ChunkLayer>,
@@ -208,7 +211,7 @@ fn on_shoot(
             yaw.cos() * pitch.cos(),
         );
 
-        let Ok((mut shooter_inv, layer_id)) = shooter.get_mut(event.client) else {
+        let Ok((mut shooter_inv, layer_id, combat_state)) = shooter.get_mut(event.client) else {
             continue;
         };
 
@@ -229,7 +232,11 @@ fn on_shoot(
 
         let mut position = event.position.0;
 
-        position.y += 1.5;
+        position.y += if combat_state.is_sneaking {
+            SNEAK_EYE_HEIGHT
+        } else {
+            EYE_HEIGHT
+        } as f64;
         position += direction.as_dvec3() * 0.1;
 
         // Separate hitbox for arrow-block and arrow-entity collision

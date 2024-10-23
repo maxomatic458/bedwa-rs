@@ -26,7 +26,7 @@ impl Plugin for VoidDeathPlugin {
 #[allow(clippy::type_complexity)]
 fn void_death(
     mut clients: Query<(Entity, &Position), (With<Team>, Without<IsDead>)>,
-    bedwars_config: Res<bedwars_config::BedwarsConfig>,
+    bedwars_config: Res<bedwars_config::WorldConfig>,
     mut event_writer: EventWriter<PlayerHurtEvent>,
 ) {
     for (player, position) in &mut clients {

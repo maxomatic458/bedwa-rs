@@ -1,7 +1,9 @@
 use bevy_ecs::query::QueryData;
 use bevy_state::prelude::in_state;
+use bevy_time::{Time, Timer, TimerMode};
+use rand::Rng;
 use valence::{
-    entity::{living::StuckArrowCount, EntityId, EntityStatuses, Velocity},
+    entity::{entity::Flags, living::StuckArrowCount, EntityId, EntityStatuses, Velocity},
     inventory::HeldItem,
     prelude::*,
     protocol::{sound::SoundCategory, Sound},
@@ -14,28 +16,48 @@ use crate::{
 };
 
 use super::{
-    armor::EquipmentExtDamageReduction,
+    armor::EquipmentExtReduction,
     bow::{ArrowOwner, ArrowPower, BowUsed},
     death::{IsDead, PlayerHurtEvent},
     fall_damage::FallingState,
     physics::EntityEntityCollisionEvent,
 };
 
-const ATTACK_COOLDOWN_TICKS: i64 = 10;
+pub const EYE_HEIGHT: f32 = 1.62;
+pub const SNEAK_EYE_HEIGHT: f32 = 1.54;
 
-const KNOCKBACK_DEFAULT_XZ: f32 = 8.0;
-const KNOCKBACK_DEFAULT_Y: f32 = 6.432;
-const KNOCKBACK_SPEED_XY: f32 = 18.0;
-const KNOCKBACK_SPEED_Y: f32 = 8.432;
+const ATTACK_COOLDOWN_TICKS: i64 = 10;
 const CRIT_MULTIPLIER: f32 = 1.5;
 
 const FRIENLDY_FIRE: bool = false;
+
+const DEFAULT_KNOCKBACK: f32 = 0.4;
+
+const BURN_DAMAGE_PER_SECOND: f32 = 1.0;
+
+#[derive(Component)]
+pub struct Burning {
+    pub timer: Timer, // second timer
+    pub repeats_left: u32,
+    pub attacker: Option<Entity>,
+}
+
+impl Burning {
+    pub fn new(seconds: f32, attacker: Option<Entity>) -> Self {
+        Self {
+            timer: Timer::from_seconds(1.0, TimerMode::Repeating),
+            repeats_left: (seconds as u32).saturating_sub(1),
+            attacker,
+        }
+    }
+}
 
 /// Attached to every client.
 #[derive(Component, Default)]
 pub struct CombatState {
     pub last_attacked_tick: i64,
     pub is_sprinting: bool,
+    pub is_sneaking: bool,
     /// The last tick the player was hit
     pub last_hit_tick: i64,
 }
@@ -46,7 +68,8 @@ impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (combat_system, arrow_hits).run_if(in_state(GameState::Match)),
+            (combat_system, arrow_hits, apply_fire_damage, on_start_burn)
+                .run_if(in_state(GameState::Match)),
         );
     }
 }
@@ -57,6 +80,7 @@ struct CombatQuery {
     client: &'static mut Client,
     entity_id: &'static EntityId,
     position: &'static Position,
+    velocity: &'static mut Velocity,
     state: &'static mut CombatState,
     statuses: &'static mut EntityStatuses,
     inventory: &'static Inventory,
@@ -68,10 +92,53 @@ struct CombatQuery {
     stuck_arrow_count: &'static mut StuckArrowCount,
 }
 
+fn xy_knockback(damage_pos: DVec3, victim_pos: DVec3) -> (f32, f32) {
+    let mut x = (damage_pos.x - victim_pos.x) as f32;
+    let mut z = (damage_pos.z - victim_pos.z) as f32;
+
+    while x * x + z * z < 1.0e-4 {
+        x = (rand::random::<f32>() - rand::random::<f32>()) * 0.01;
+        z = (rand::random::<f32>() - rand::random::<f32>()) * 0.01;
+    }
+
+    (x, z)
+}
+
+fn receive_knockback(
+    victim: &mut CombatQueryItem<'_>,
+    mut strength: f32,
+    x: f32,
+    z: f32,
+    extra_knockback: Vec3,
+) {
+    strength *= 1.0 - victim.equipment.knockback_resistance();
+    if strength <= 0.0 {
+        return;
+    }
+
+    let movement = victim.velocity.0;
+    let knockback = Vec3::new(x, 0.0, z).normalize() * strength;
+    let y_knockback = if !victim.falling_state.falling {
+        0.4_f32.min(movement.y / 2.0 + strength)
+    } else {
+        movement.y
+    };
+    let knockback = Vec3::new(
+        movement.x / 2.0 - knockback.x,
+        y_knockback,
+        movement.z / 2.0 - knockback.z,
+    );
+
+    victim
+        .client
+        .set_velocity((knockback * 20.0) + extra_knockback); // ticks per sec to mps
+}
+
 fn combat_system(
-    // mut layer: Query<&mut ChunkLayer>,
+    mut commands: Commands,
     mut clients: Query<CombatQuery, Without<IsDead>>,
     mut sprinting: EventReader<SprintEvent>,
+    mut sneaking: EventReader<SneakEvent>,
     mut interact_entity_events: EventReader<InteractEntityEvent>,
     server: Res<Server>,
     mut event_writer: EventWriter<PlayerHurtEvent>,
@@ -79,6 +146,12 @@ fn combat_system(
     for &SprintEvent { client, state } in sprinting.read() {
         if let Ok(mut client) = clients.get_mut(client) {
             client.state.is_sprinting = state == SprintState::Start;
+        }
+    }
+
+    for &SneakEvent { client, state } in sneaking.read() {
+        if let Ok(mut client) = clients.get_mut(client) {
+            client.state.is_sneaking = state == SneakState::Start;
         }
     }
 
@@ -112,24 +185,19 @@ fn combat_system(
             .normalize()
             .as_vec3();
 
-        let xz_knockback = if attacker.state.is_sprinting {
-            KNOCKBACK_SPEED_XY
-        } else {
-            KNOCKBACK_DEFAULT_XZ
-        };
-
-        let y_knockback = if attacker.state.is_sprinting {
-            KNOCKBACK_SPEED_Y
-        } else {
-            KNOCKBACK_DEFAULT_Y
-        };
-
-        let mut knockback_vec = Vec3::new(dir.x * xz_knockback, y_knockback, dir.z * xz_knockback);
         let attack_weapon = attacker.inventory.slot(attacker.held_item.slot());
 
-        knockback_vec += attack_weapon.knockback_extra() * dir;
+        let burn_time = attack_weapon.burn_time();
 
-        victim.client.set_velocity(knockback_vec);
+        if burn_time > 0.0 {
+            commands
+                .entity(victim.entity)
+                .insert(Burning::new(burn_time, Some(attacker.entity)));
+        }
+
+        let extra_knockback = attack_weapon.knockback_extra() * dir;
+        let (x, z) = xy_knockback(attacker.position.0, victim.position.0);
+        receive_knockback(&mut victim, DEFAULT_KNOCKBACK, x, z, extra_knockback);
 
         victim.client.trigger_status(EntityStatus::PlayAttackSound);
         victim.statuses.trigger(EntityStatus::PlayAttackSound);
@@ -141,8 +209,6 @@ fn combat_system(
             } else {
                 1.0
             };
-
-        tracing::info!("Dealing {} damage to {}", damage, victim.entity);
 
         let damage_after_armor = victim.equipment.received_damage(damage);
 
@@ -158,19 +224,20 @@ fn combat_system(
 fn arrow_hits(
     mut commands: Commands,
     mut events: EventReader<EntityEntityCollisionEvent>,
-    arrows: Query<(&Velocity, &ArrowPower, &ArrowOwner, &BowUsed)>,
+    arrows: Query<
+        (&Velocity, &ArrowPower, &ArrowOwner, &BowUsed, &OldPosition),
+        Without<CombatState>,
+    >,
     mut clients: Query<CombatQuery>,
     mut event_writer: EventWriter<PlayerHurtEvent>,
+    mut layer: Query<&mut ChunkLayer>,
 ) {
     for event in events.read() {
-        let Ok((arrow_velocity, arrow_power, arrow_owner, bow_used)) = arrows.get(event.entity1)
+        let Ok((arrow_velocity, arrow_power, arrow_owner, bow_used, old_pos)) =
+            arrows.get(event.entity1)
         else {
             continue;
         };
-
-        tracing::info!("Owner: {:?}", arrow_owner);
-
-        tracing::info!("event: {:?}", event);
 
         let Ok(mut attacker) = clients.get_mut(arrow_owner.0) else {
             continue;
@@ -184,9 +251,19 @@ fn arrow_hits(
             1.0,
         );
 
-        let Ok(victim) = clients.get_mut(event.entity2) else {
+        let Ok(mut victim) = clients.get_mut(event.entity2) else {
             continue;
         };
+
+        let mut layer = layer.single_mut();
+
+        layer.play_sound(
+            Sound::EntityArrowHit,
+            SoundCategory::Neutral,
+            victim.position.0,
+            1.0,
+            rand::thread_rng().gen_range(1.0909..1.3333),
+        );
 
         let power_level = bow_used
             .0
@@ -195,8 +272,29 @@ fn arrow_hits(
             .copied()
             .unwrap_or(0);
 
+        let punch_level = bow_used
+            .0
+            .enchantments()
+            .get(&Enchantment::Punch)
+            .copied()
+            .unwrap_or(0);
+
+        let burn_time = bow_used.0.burn_time();
+
+        tracing::info!("burn_time: {}", burn_time);
+
+        if burn_time > 0.0 {
+            commands
+                .entity(victim.entity)
+                .insert(Burning::new(burn_time, Some(arrow_owner.0)));
+        }
+
         let damage = arrow_power.damage(**arrow_velocity, power_level);
         let damage_after_armor = victim.equipment.received_damage(damage);
+
+        let extra_knockback = arrow_power.knockback_extra(**arrow_velocity, punch_level);
+        let (x, z) = xy_knockback(old_pos.get(), victim.position.0);
+        receive_knockback(&mut victim, DEFAULT_KNOCKBACK, x, z, extra_knockback);
 
         event_writer.send(PlayerHurtEvent {
             attacker: Some(arrow_owner.0),
@@ -206,5 +304,38 @@ fn arrow_hits(
         });
 
         commands.entity(event.entity1).insert(Despawned);
+    }
+}
+
+fn apply_fire_damage(
+    mut commands: Commands,
+    mut burning: Query<(Entity, &mut Flags, &Position, &mut Burning)>,
+    mut event_writer: EventWriter<PlayerHurtEvent>,
+    time: Res<Time>,
+) {
+    for (entity, mut flags, position, mut burn) in burning.iter_mut() {
+        if burn.timer.tick(time.delta()).finished() {
+            burn.repeats_left -= 1;
+
+            if burn.repeats_left == 0 {
+                commands.entity(entity).remove::<Burning>();
+                flags.set_on_fire(false);
+            }
+
+            tracing::info!("damage");
+
+            event_writer.send(PlayerHurtEvent {
+                attacker: burn.attacker,
+                victim: entity,
+                damage: BURN_DAMAGE_PER_SECOND,
+                position: position.0,
+            });
+        }
+    }
+}
+
+fn on_start_burn(mut burning: Query<&mut Flags, Added<Burning>>) {
+    for mut flags in &mut burning {
+        flags.set_on_fire(true);
     }
 }

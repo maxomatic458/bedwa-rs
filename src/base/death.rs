@@ -12,7 +12,7 @@ use valence::{entity::living::Health, prelude::*};
 
 use crate::Spectator;
 use crate::{
-    bedwars_config::BedwarsConfig, r#match::MatchState, utils::inventory::InventoryExt, GameState,
+    bedwars_config::WorldConfig, r#match::MatchState, utils::inventory::InventoryExt, GameState,
     Team,
 };
 
@@ -110,7 +110,7 @@ fn player_respawn(
         ),
         Without<Spectator>,
     >,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
 ) {
     let Ok((mut position, mut health, mut game_mode, team, mut equipment)) =
         clients.get_mut(trigger.entity())

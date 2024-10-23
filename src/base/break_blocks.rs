@@ -12,7 +12,7 @@ use prelude::{Commands, Entity, Event, EventReader, EventWriter, IntoSystemConfi
 use rand::Rng;
 use valence::*;
 
-use crate::{bedwars_config::BedwarsConfig, utils::despawn_timer::DespawnTimer, GameState, Team};
+use crate::{bedwars_config::WorldConfig, utils::despawn_timer::DespawnTimer, GameState, Team};
 
 use super::{
     build::PlayerPlacedBlocks,
@@ -44,7 +44,7 @@ fn break_blocks(
     mut events: EventReader<DiggingEvent>,
     mut layer: Query<(Entity, &mut ChunkLayer)>,
     player_placed_blocks: Res<PlayerPlacedBlocks>,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
     // match_state: ResMut<MatchState>,
     mut event_writer: EventWriter<BedDestroyedEvent>,
 ) {
@@ -73,10 +73,10 @@ fn break_blocks(
                 z: block_pos.z,
             };
 
-            if bed_block_set.contains(&block_pos_vec) {
+            if bed_block_set.iter().any(|(pos, _)| pos == &block_pos_vec) {
                 // set bed to broken
-                for block in bed_block_set {
-                    layer_mut.set_block(BlockPos::new(block.x, block.y, block.z), BlockState::AIR);
+                for (pos, _block) in bed_block_set {
+                    layer_mut.set_block(BlockPos::new(pos.x, pos.y, pos.z), BlockState::AIR);
                 }
 
                 let (victim_team, victim_color) =

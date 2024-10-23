@@ -9,20 +9,22 @@ use valence::{
     app::{Plugin, Update},
     client::{Client, Username},
     entity::{player::PlayerEntity, EntityLayerId, HeadYaw, Look, Position},
-    prelude::{Component, InteractEntityEvent, IntoSystemConfigs, Inventory, InventoryKind},
+    prelude::{
+        Component, DetectChangesMut, InteractEntityEvent, IntoSystemConfigs, Inventory,
+        InventoryKind,
+    },
     protocol::{sound::SoundCategory, Sound},
     ChunkLayer, EntityLayer, ItemKind, ItemStack,
 };
 
 use crate::{
     base::death::IsDead,
-    bedwars_config::{BedwarsConfig, ShopConfig},
+    bedwars_config::{ShopConfig, WorldConfig},
     menu::{ItemMenu, MenuItemSelectEvent},
     utils::inventory::InventoryExt,
     GameState, Team,
 };
 
-// const SHOP_ENTITY_BUNDLE =
 const SHOP_INVENTORY_TYPE: InventoryKind = InventoryKind::Generic9x5;
 
 #[derive(Debug, Clone, Component)]
@@ -48,7 +50,7 @@ impl Plugin for ShopPlugin {
 /// Initialize the shops
 fn init_shops(
     mut commands: Commands,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
     layers: Query<Entity, (With<ChunkLayer>, With<EntityLayer>)>,
 ) {
     tracing::debug!("initializing shops");
@@ -137,7 +139,7 @@ fn on_shop_click(
     )>,
     mut events: EventReader<MenuItemSelectEvent>,
     shop_config: Res<ShopConfig>,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
 ) {
     for event in events.read() {
         let Ok((mut client, position, mut inventory, mut shop_state, team, item_menu)) =
@@ -206,6 +208,7 @@ fn on_shop_click(
 
                         if let Some(ref mut nbt) = offer.nbt {
                             // Remove lore from item when bought
+                            // TODO: its Display -> Lore
                             nbt.remove("Lore");
                         }
 
@@ -242,5 +245,7 @@ fn on_shop_click(
                 // Buy an item
             }
         }
+
+        inventory.set_changed();
     }
 }

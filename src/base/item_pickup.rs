@@ -18,7 +18,7 @@ use crate::utils::inventory::InventoryExt;
 
 const PICKUP_RANGE_HOR: f64 = 1.0;
 const PICKUP_RANGE_VER: f64 = 0.5;
-const PICKUP_DELAY_SECS: f32 = 0.5;
+const PICKUP_DELAY_SECS: f32 = 0.7;
 pub struct ItemPickupPlugin;
 
 /// A marker for items that can be picked up once the inner time elapses.

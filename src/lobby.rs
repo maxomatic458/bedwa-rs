@@ -15,6 +15,7 @@ use valence::{
     interact_item::InteractItemEvent,
     inventory::HeldItem,
     nbt::{compound, Compound},
+    player_list::DisplayName,
     prelude::{Component, IntoSystemConfigs, Inventory, InventoryKind},
     protocol::{sound::SoundCategory, Sound},
     title::SetTitle,
@@ -22,8 +23,9 @@ use valence::{
 };
 
 use crate::{
-    bedwars_config::{self, BedwarsConfig},
+    bedwars_config::{self, WorldConfig},
     menu::{ItemMenu, MenuItemSelectEvent},
+    utils::inventory::InventoryExt,
     GameState, LobbyPlayer, Team,
 };
 
@@ -35,7 +37,7 @@ const NO_TEAM_SELECTED_ITEM: ItemKind = ItemKind::Barrier;
 pub struct LobbyPlugin;
 
 /// Represents the players in the lobby
-#[derive(Debug, Clone, Resource)]
+#[derive(Debug, Clone, Resource, Default)]
 pub struct LobbyPlayerState {
     /// player name -> team name
     pub players: HashMap<String, String>,
@@ -51,16 +53,10 @@ impl Plugin for LobbyPlugin {
                 init_lobby_player.run_if(in_state(GameState::Lobby)),
                 lobby_right_click.run_if(in_state(GameState::Lobby)),
                 on_team_select.run_if(in_state(GameState::Lobby)),
-                // Keep updagint the action bar also in the match
-                set_action_bar
-                    .run_if(in_state(GameState::Match))
-                    .run_if(in_state(GameState::Lobby)),
+                set_action_bar,
             ),
         )
-        .insert_resource(LobbyPlayerState {
-            players: HashMap::new(),
-            without_team: 0,
-        });
+        .insert_resource(LobbyPlayerState::default());
     }
 }
 
@@ -70,7 +66,7 @@ fn init_lobby_player(
         (Added<LobbyPlayer>,),
     >,
     mut lobby_state: ResMut<LobbyPlayerState>,
-    bedwars_config: Res<bedwars_config::BedwarsConfig>,
+    bedwars_config: Res<bedwars_config::WorldConfig>,
 ) {
     for (mut position, mut game_mode, mut inventory, mut health) in &mut clients {
         tracing::info!("Initializing lobby player");
@@ -78,6 +74,7 @@ fn init_lobby_player(
         *game_mode = GameMode::Survival;
         *health = Health(20.0);
 
+        inventory.clear();
         inventory.readonly = true;
 
         let team_selector_nbt = Compound::new();
@@ -101,7 +98,7 @@ fn lobby_right_click(
     mut commands: Commands,
     clients: Query<(&HeldItem, &Inventory), With<LobbyPlayer>>,
     mut events: EventReader<InteractItemEvent>,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
 ) {
     for event in events.read() {
         for (held_item, inventory) in &mut clients.iter() {
@@ -117,7 +114,7 @@ fn lobby_right_click(
 fn open_team_selection_menu(
     commands: &mut Commands,
     player_ent: Entity,
-    bedwars_config: &BedwarsConfig,
+    bedwars_config: &WorldConfig,
 ) {
     let mut inv = Inventory::new(InventoryKind::Generic9x1);
     // TODO: set item name to team name
@@ -149,16 +146,23 @@ fn open_team_selection_menu(
 fn on_team_select(
     mut commands: Commands,
     mut clients: Query<
-        (Entity, &Position, &mut Client, &Username, Option<&Team>),
+        (
+            Entity,
+            &Position,
+            &mut Client,
+            &Username,
+            Option<&Team>,
+            &mut DisplayName,
+        ),
         With<LobbyPlayer>,
     >,
     mut events: EventReader<MenuItemSelectEvent>,
     mut lobby_state: ResMut<LobbyPlayerState>,
     mut state: ResMut<NextState<GameState>>,
-    bedwars_config: Res<BedwarsConfig>,
+    bedwars_config: Res<WorldConfig>,
 ) {
     for event in events.read() {
-        let Ok((player_ent, position, mut client, username, switched_from)) =
+        let Ok((player_ent, position, mut client, username, switched_from, mut display_name)) =
             clients.get_mut(event.client)
         else {
             continue;
@@ -179,10 +183,16 @@ fn on_team_select(
                 1.0,
             );
 
+            display_name.0 = Some(format!("{}{}", team_color.text_color(), username).into());
+
             commands.entity(player_ent).remove::<ItemMenu>();
             tracing::warn!("removing team selector for {}", username);
 
             client.set_action_bar(format!("{}{} team", team_color.text_color(), team));
+
+            commands
+                .entity(player_ent)
+                .insert(TeamActionBarTimer::default());
 
             tracing::info!("Player {} selected team {}", username, team);
 
@@ -195,7 +205,7 @@ fn on_team_select(
 
             if lobby_state.without_team == 0 {
                 tracing::info!("setting state to match");
-                for (player, _, _, _, _) in clients.iter() {
+                for (player, _, _, _, _, _) in clients.iter() {
                     commands.entity(player).remove::<LobbyPlayer>();
                 }
 
@@ -225,6 +235,8 @@ fn set_action_bar(mut players: Query<(&mut Client, &Team, &TeamActionBarTimer)>)
         if !timer.0.just_finished() {
             continue;
         }
+
+        tracing::info!("Updating action bar for team {}", team.name);
 
         let team_color = team.color;
         client.set_action_bar(&format!("{} Team: {}", team_color.text_color(), team.name));
