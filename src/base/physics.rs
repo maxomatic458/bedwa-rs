@@ -147,7 +147,7 @@ fn handle_collision(
         }
 
         if let Some(drag) = query.drag {
-            query.velocity.0 *= drag.0 * time.delta_seconds();
+            query.velocity.0 *= 1.0 - drag.0 * time.delta_seconds();
         }
 
         if let Some(ref gravity) = query.gravity {

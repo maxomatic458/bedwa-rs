@@ -1,5 +1,6 @@
 use bevy_ecs::{
     entity::Entity,
+    query::Without,
     system::{Commands, Query, Res},
 };
 use bevy_time::{Time, Timer, TimerMode};
@@ -12,7 +13,7 @@ use valence::{
     Despawned,
 };
 
-use crate::utils::inventory::InventoryExt;
+use crate::{utils::inventory::InventoryExt, Spectator};
 
 // https://minecraft.fandom.com/wiki/Item_(entity)
 
@@ -46,7 +47,7 @@ impl Plugin for ItemPickupPlugin {
 
 fn pickup_items(
     mut commands: Commands,
-    mut players: Query<(&Position, &mut Inventory, &mut Client)>,
+    mut players: Query<(&Position, &mut Inventory, &mut Client), Without<Spectator>>,
     mut items: Query<(Entity, &Position, &mut Stack, &mut PickupMarker)>,
     time: Res<Time>,
 ) {

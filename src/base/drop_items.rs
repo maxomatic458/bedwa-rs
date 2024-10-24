@@ -90,7 +90,10 @@ fn merge_to_stacks(
     mut items: Query<(Entity, &Position, &mut Stack)>,
     server: Res<Server>,
 ) {
-    if server.current_tick() % 4 != 0 {
+    let tick_rate = u32::from(server.tick_rate()) as i64;
+
+    // TODO: use time instant here
+    if server.current_tick() % (tick_rate / 2) != 0 {
         return;
     }
 

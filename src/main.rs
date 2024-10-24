@@ -1,9 +1,12 @@
+use std::num::NonZero;
+
 use base::{
     armor_right_click_equip::ArmorRightClickEquipPlugin, bow::BowPlugin,
-    break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, combat::CombatPlugin,
-    death::DeathPlugin, drop_items::ItemDropPlugin, fall_damage::FallDamagePlugin,
-    item_pickup::ItemPickupPlugin, physics::PhysicsPlugin, regeneration::RegenerationPlugin,
-    scoreboard::ScoreboardPlugin, utils::debug::DebugPlugin, void_death::VoidDeathPlugin,
+    break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, chests::ChestPlugin,
+    combat::CombatPlugin, death::DeathPlugin, drop_items::ItemDropPlugin,
+    fall_damage::FallDamagePlugin, item_pickup::ItemPickupPlugin, physics::PhysicsPlugin,
+    regeneration::RegenerationPlugin, scoreboard::ScoreboardPlugin, utils::debug::DebugPlugin,
+    void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
 use bevy_time::{Time, TimePlugin};
@@ -18,7 +21,7 @@ use resource_spawners::ResourceSpawnerPlugin;
 use shop::ShopPlugin;
 use spectator::SpectatorPlugin;
 use utils::despawn_timer::DespawnTimerPlugin;
-use valence::{anvil::AnvilLevel, command::AddCommand, prelude::*};
+use valence::{anvil::AnvilLevel, command::AddCommand, prelude::*, ServerSettings};
 
 pub mod base;
 pub mod bedwars_config;
@@ -73,9 +76,8 @@ fn main() {
     std::env::set_var("RUST_LOG", "debug");
 
     App::new()
-        .insert_resource(NetworkSettings {
-            connection_mode: ConnectionMode::Offline,
-            // callbacks: MyCallbacks.into(),
+        .insert_resource(ServerSettings {
+            tick_rate: NonZero::new(60).unwrap(),
             ..Default::default()
         })
         .add_plugins(StatesPlugin)
@@ -105,6 +107,7 @@ fn main() {
         .add_plugins(ResourceSpawnerPlugin)
         .add_plugins(CombatPlugin)
         .add_plugins(ArmorRightClickEquipPlugin)
+        .add_plugins(ChestPlugin)
         .add_systems(Startup, setup)
         .add_systems(
             Update,

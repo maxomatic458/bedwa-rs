@@ -26,7 +26,8 @@ use super::{
 pub const EYE_HEIGHT: f32 = 1.62;
 pub const SNEAK_EYE_HEIGHT: f32 = 1.54;
 
-const ATTACK_COOLDOWN_TICKS: i64 = 10;
+// const ATTACK_COOLDOWN_TICKS: i64 = 10;
+pub const ATTACK_COOLDOWN_MILLIS: u64 = 500;
 const CRIT_MULTIPLIER: f32 = 1.5;
 
 const FRIENLDY_FIRE: bool = false;
@@ -53,13 +54,24 @@ impl Burning {
 }
 
 /// Attached to every client.
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct CombatState {
-    pub last_attacked_tick: i64,
+    pub last_attack: std::time::Instant,
     pub is_sprinting: bool,
     pub is_sneaking: bool,
-    /// The last tick the player was hit
-    pub last_hit_tick: i64,
+    /// The last time the player was hit by an entity.
+    pub last_hit: std::time::Instant,
+}
+
+impl Default for CombatState {
+    fn default() -> Self {
+        Self {
+            last_attack: std::time::Instant::now(),
+            is_sprinting: false,
+            is_sneaking: false,
+            last_hit: std::time::Instant::now(),
+        }
+    }
 }
 
 pub struct CombatPlugin;
@@ -70,7 +82,8 @@ impl Plugin for CombatPlugin {
             Update,
             (combat_system, arrow_hits, apply_fire_damage, on_start_burn)
                 .run_if(in_state(GameState::Match)),
-        );
+        )
+        .observe(on_remove_burn);
     }
 }
 
@@ -140,7 +153,6 @@ fn combat_system(
     mut sprinting: EventReader<SprintEvent>,
     mut sneaking: EventReader<SneakEvent>,
     mut interact_entity_events: EventReader<InteractEntityEvent>,
-    server: Res<Server>,
     mut event_writer: EventWriter<PlayerHurtEvent>,
 ) {
     for &SprintEvent { client, state } in sprinting.read() {
@@ -174,12 +186,12 @@ fn combat_system(
             continue;
         }
 
-        if attacker.state.last_attacked_tick + ATTACK_COOLDOWN_TICKS >= server.current_tick() {
+        if (attacker.state.last_attack.elapsed().as_millis() as u64) < ATTACK_COOLDOWN_MILLIS {
             continue;
         }
 
-        attacker.state.last_attacked_tick = server.current_tick();
-        victim.state.last_hit_tick = server.current_tick();
+        attacker.state.last_attack = std::time::Instant::now();
+        victim.state.last_hit = std::time::Instant::now();
 
         let dir = (victim.position.0 - attacker.position.0)
             .normalize()
@@ -337,5 +349,11 @@ fn apply_fire_damage(
 fn on_start_burn(mut burning: Query<&mut Flags, Added<Burning>>) {
     for mut flags in &mut burning {
         flags.set_on_fire(true);
+    }
+}
+
+fn on_remove_burn(trigger: Trigger<OnRemove, Burning>, mut entities: Query<&mut Flags>) {
+    if let Ok(mut flags) = entities.get_mut(trigger.entity()) {
+        flags.set_on_fire(false);
     }
 }

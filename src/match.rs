@@ -23,14 +23,15 @@ use valence::{
     prelude::{Block, DetectChanges, Equipment, IntoSystemConfigs, Inventory, Resource, Trigger},
     protocol::{sound::SoundCategory, Sound},
     title::SetTitle,
-    BlockPos, BlockState, ChunkLayer, Despawned, GameMode, ItemKind, ItemStack,
+    BlockPos, BlockState, ChunkLayer, Despawned, GameMode, ItemKind,
 };
 
 use crate::{
     base::{
         break_blocks::BedDestroyedEvent,
         build::PlayerPlacedBlocks,
-        combat::CombatState,
+        chests::ChestState,
+        combat::{Burning, CombatState},
         death::{IsDead, PlayerDeathEvent},
         fall_damage::FallingState,
         physics::CollidableForEntities,
@@ -141,9 +142,9 @@ fn start_match(
         inventory.clear();
         inventory.readonly = false;
 
-        inventory.set_slot(36, ItemStack::new(ItemKind::Brick, 64, None));
-        inventory.set_slot(37, ItemStack::new(ItemKind::IronIngot, 64, None));
-        inventory.set_slot(38, ItemStack::new(ItemKind::GoldIngot, 64, None));
+        // inventory.set_slot(36, ItemStack::new(ItemKind::Brick, 64, None));
+        // inventory.set_slot(37, ItemStack::new(ItemKind::IronIngot, 64, None));
+        // inventory.set_slot(38, ItemStack::new(ItemKind::GoldIngot, 64, None));
 
         let team_spawn = bedwars_config.spawns.get(&team.name).unwrap();
         pos.set(team_spawn.clone());
@@ -258,7 +259,7 @@ fn on_end_match(
         .count();
 
     // DEBUG
-    if teams_left >= 1 {
+    if teams_left > 1 {
         return;
     }
 
@@ -307,6 +308,7 @@ fn tick_postmatch_timer(
     mut layer: Query<&mut ChunkLayer>,
     time: Res<Time>,
     bedwars_config: Res<WorldConfig>,
+    mut chest_state: ResMut<ChestState>,
 ) {
     timer.0.tick(time.delta());
 
@@ -318,14 +320,17 @@ fn tick_postmatch_timer(
             .entity(ent)
             .remove::<CombatState>()
             .remove::<FallingState>()
-            .remove::<Equipment>()
+            // .remove::<Equipment>()
             .remove::<CollidableForEntities>()
             .remove::<EquipmentInventorySync>()
             .remove::<Team>()
             .remove::<IsDead>()
             .remove::<Spectator>()
+            .remove::<Burning>()
             .insert(LobbyPlayer);
     }
+
+    *chest_state = ChestState::default();
 
     for scoreboard in &mut scoreboard.iter() {
         commands.entity(scoreboard).insert(Despawned);

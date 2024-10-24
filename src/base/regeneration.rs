@@ -10,7 +10,8 @@ use super::combat::CombatState;
 pub struct RegenerationPlugin;
 
 const SECS_PER_HP: f32 = 4.0;
-const COMBAT_COOLDOWN_TICKS: i64 = 140;
+// const COMBAT_COOLDOWN_TICKS: u128 = 140;
+const COMBAT_COOLDOWN_MILLIS: u128 = 7000;
 
 #[derive(Component)]
 struct RegenTimer(Timer);
@@ -41,13 +42,10 @@ struct RegenerationQuery {
 fn regeneration_system(
     mut commands: Commands,
     mut query: Query<(RegenerationQuery, Option<&mut RegenTimer>)>,
-    server: Res<Server>,
     time: Res<Time>,
 ) {
-    let current_tick = server.current_tick();
-
     for (mut query, timer) in query.iter_mut() {
-        if query.combat_state.last_attacked_tick + COMBAT_COOLDOWN_TICKS >= current_tick {
+        if query.combat_state.last_hit.elapsed().as_millis() < COMBAT_COOLDOWN_MILLIS {
             // player entered / is in combat, remove the regen timer
             commands.entity(query.entity).remove::<RegenTimer>();
         } else if let Some(mut timer) = timer {
