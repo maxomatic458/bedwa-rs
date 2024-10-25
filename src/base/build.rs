@@ -77,12 +77,6 @@ fn place_blocks(
 
             // TODO: also very inefficient
             for entity_hitbox in entities.iter() {
-                tracing::info!("Checking entity hitbox");
-                tracing::info!(
-                    "block: {:?} intersects entity: {:?}",
-                    block_hitbox,
-                    entity_hitbox
-                );
                 if block_hitbox.intersects(**entity_hitbox) {
                     return;
                 }
@@ -106,8 +100,6 @@ fn place_blocks(
         );
 
         player_placed_blocks.0.insert(real_pos, state);
-
         layer.set_block(real_pos, state);
-        tracing::error!("placed at: {}", real_pos);
     }
 }

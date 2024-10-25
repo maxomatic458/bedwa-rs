@@ -33,7 +33,7 @@ pub struct BowPlugin;
 
 const CAN_SHOOT_AFTER_MS: u64 = 150;
 const ARROW_GRAVITY_MPSS: f32 = 20.0;
-const BOW_INACCURACY: f64 = 0.0172275;
+const PROJECTILE_INACCURACY: f64 = 0.0172275;
 pub const ARROW_BASE_DAMAGE: f32 = 2.0;
 const ARROW_TERMINAL_VELOCITY: f32 = 100.0;
 
@@ -57,10 +57,7 @@ impl ArrowPower {
         let base = ARROW_BASE_DAMAGE + power_extra_dmg(power_level);
 
         let velocity_tps_len = velocity_mps.length() / 20.0; // m/s to m/tick
-
         let mut damage = (velocity_tps_len * base).clamp(0.0, i32::MAX as f32).ceil() as i32;
-
-        tracing::info!("Arrow damage: {}", damage);
 
         if self.is_critical() {
             let crit_extra_damage: i32 = rand::thread_rng().gen_range(0..damage / 2 + 1);
@@ -108,10 +105,9 @@ impl Plugin for BowPlugin {
 fn on_bow_draw(
     mut commands: Commands,
     mut clients: Query<(&Inventory, &HeldItem, &mut LivingFlags)>,
-    mut item_use_events: EventReader<InteractItemEvent>,
-    // server: Res<Server>,
+    mut events: EventReader<InteractItemEvent>,
 ) {
-    for event in item_use_events.read() {
+    for event in events.read() {
         let Ok((inventory, held_item, mut flags)) = clients.get_mut(event.client) else {
             continue;
         };
@@ -161,9 +157,6 @@ fn on_bow_release(
         }
 
         let ms_drawn = bow_state.start_draw_tick.elapsed().as_millis() as u64;
-
-        tracing::info!("Bow drawn for {}ms", ms_drawn);
-
         let stack = inventory.slot(held_item.slot()).clone();
 
         event_writer.send(BowShootEvent {
@@ -211,8 +204,6 @@ fn on_shoot(
             continue;
         };
 
-        tracing::info!("{:?} shoots an arrow", event.client);
-
         if !event
             .bow_used
             .enchantments()
@@ -222,7 +213,7 @@ fn on_shoot(
         }
 
         let arrow_power = get_bow_power_for_draw_ticks(event.ms_drawn / 50);
-        let velocity = calculate_bow_velocity(direction, arrow_power as f32);
+        let velocity = calculate_projectile_velocity(direction, arrow_power as f32, 1.0);
 
         let direction = velocity.normalize();
 
@@ -246,9 +237,9 @@ fn on_shoot(
             .spawn(ArrowEntityBundle {
                 position: Position(position),
                 velocity: Velocity(velocity),
-
                 layer: *layer_id,
                 entity_no_gravity: NoGravity(true),
+
                 ..Default::default()
             })
             .insert(PhysicsMarker)
@@ -311,7 +302,7 @@ fn on_hit_block(
     }
 }
 
-fn calculate_bow_velocity(direction: Vec3, arrow_power: f32) -> Vec3 {
+pub fn calculate_projectile_velocity(direction: Vec3, arrow_power: f32, inaccuracy: f64) -> Vec3 {
     let direction = direction.normalize();
 
     // We multiply by 20, because our velocity is m/s,
@@ -319,9 +310,9 @@ fn calculate_bow_velocity(direction: Vec3, arrow_power: f32) -> Vec3 {
 
     (direction
         + Vec3 {
-            x: random_triangle(0.0, BOW_INACCURACY) as f32,
-            y: random_triangle(0.0, BOW_INACCURACY) as f32,
-            z: random_triangle(0.0, BOW_INACCURACY) as f32,
+            x: random_triangle(0.0, inaccuracy * PROJECTILE_INACCURACY) as f32,
+            y: random_triangle(0.0, inaccuracy * PROJECTILE_INACCURACY) as f32,
+            z: random_triangle(0.0, inaccuracy * PROJECTILE_INACCURACY) as f32,
         })
         * arrow_power
         * 20.0

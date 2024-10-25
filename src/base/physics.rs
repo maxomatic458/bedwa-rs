@@ -214,11 +214,6 @@ fn handle_collision(
                         for k in z_range.step_by(step_z.unsigned_abs() as usize) {
                             let block_pos = BlockPos { x: i, y: j, z: k };
 
-                            // if k % 32 == 0 {
-                            // tracing::info!("block_pos: {:?}", block_pos);
-
-                            // }
-
                             let block = layer.block(block_pos);
 
                             if let Some(block) = block {
@@ -264,28 +259,28 @@ fn handle_collision(
                     query.velocity.0.x = 0.0;
                     query.position.0.x += vx as f64 * entry_time;
 
-                    if let Some(stuck_sides) = query.stuck_sides {
-                        let dir_idx = if normal_x == 1 {
-                            Direction::East.as_u8()
-                        } else {
-                            Direction::West.as_u8()
-                        };
+                    let dir_idx = if normal_x == 1 {
+                        Direction::East.as_u8()
+                    } else {
+                        Direction::West.as_u8()
+                    };
 
+                    tx.send(Event::EntityBlockCollision(EntityBlockCollisionEvent {
+                        entity: query.entity,
+                        collision_pos: query.position.0,
+                        previous_velocity: old_velocity,
+                        block_pos: *block_pos,
+                        direction: Direction::from_u8(dir_idx),
+                    }))
+                    .unwrap();
+
+                    if let Some(stuck_sides) = query.stuck_sides {
                         if stuck_sides.sides & (1 << dir_idx) != 0 {
                             query.velocity.0 = Vec3::ZERO;
 
                             if let Some(mut gravity) = query.gravity {
                                 gravity.0 = 0.0;
                             }
-
-                            tx.send(Event::EntityBlockCollision(EntityBlockCollisionEvent {
-                                entity: query.entity,
-                                collision_pos: query.position.0,
-                                previous_velocity: old_velocity,
-                                block_pos: *block_pos,
-                                direction: Direction::from_u8(dir_idx),
-                            }))
-                            .unwrap();
 
                             break;
                         }
@@ -296,28 +291,28 @@ fn handle_collision(
                     query.velocity.0.y = 0.0;
                     query.position.0.y += vy as f64 * entry_time;
 
-                    if let Some(stuck_sides) = query.stuck_sides {
-                        let dir_idx = if normal_y == 1 {
-                            Direction::Up.as_u8()
-                        } else {
-                            Direction::Down.as_u8()
-                        };
+                    let dir_idx = if normal_y == 1 {
+                        Direction::Up.as_u8()
+                    } else {
+                        Direction::Down.as_u8()
+                    };
 
+                    tx.send(Event::EntityBlockCollision(EntityBlockCollisionEvent {
+                        entity: query.entity,
+                        collision_pos: query.position.0,
+                        previous_velocity: old_velocity,
+                        block_pos: *block_pos,
+                        direction: Direction::from_u8(dir_idx),
+                    }))
+                    .unwrap();
+
+                    if let Some(stuck_sides) = query.stuck_sides {
                         if stuck_sides.sides & (1 << dir_idx) != 0 {
                             query.velocity.0 = Vec3::ZERO;
 
                             if let Some(ref mut gravity) = query.gravity {
                                 gravity.0 = 0.0;
                             }
-
-                            tx.send(Event::EntityBlockCollision(EntityBlockCollisionEvent {
-                                entity: query.entity,
-                                collision_pos: query.position.0,
-                                previous_velocity: old_velocity,
-                                block_pos: *block_pos,
-                                direction: Direction::from_u8(dir_idx),
-                            }))
-                            .unwrap();
 
                             break;
                         }
@@ -328,28 +323,28 @@ fn handle_collision(
                     query.velocity.0.z = 0.0;
                     query.position.0.z += vz as f64 * entry_time;
 
-                    if let Some(stuck_sides) = query.stuck_sides {
-                        let dir_idx = if normal_z == 1 {
-                            Direction::South.as_u8()
-                        } else {
-                            Direction::North.as_u8()
-                        };
+                    let dir_idx = if normal_z == 1 {
+                        Direction::South.as_u8()
+                    } else {
+                        Direction::North.as_u8()
+                    };
 
+                    tx.send(Event::EntityBlockCollision(EntityBlockCollisionEvent {
+                        entity: query.entity,
+                        collision_pos: query.position.0,
+                        previous_velocity: old_velocity,
+                        block_pos: *block_pos,
+                        direction: Direction::from_u8(dir_idx),
+                    }))
+                    .unwrap();
+
+                    if let Some(stuck_sides) = query.stuck_sides {
                         if stuck_sides.sides & (1 << dir_idx) != 0 {
                             query.velocity.0 = Vec3::ZERO;
 
                             if let Some(ref mut gravity) = query.gravity {
                                 gravity.0 = 0.0;
                             }
-
-                            tx.send(Event::EntityBlockCollision(EntityBlockCollisionEvent {
-                                entity: query.entity,
-                                collision_pos: query.position.0,
-                                previous_velocity: old_velocity,
-                                block_pos: *block_pos,
-                                direction: Direction::from_u8(dir_idx),
-                            }))
-                            .unwrap();
 
                             break;
                         }
@@ -364,7 +359,6 @@ fn handle_collision(
             }
 
             if let Some(ref query_entity_hitbox) = query.entity_collider {
-                // tracing::info!("here");
                 for (entity, hitbox) in hittable_entities.iter() {
                     if entity == query.entity {
                         continue;

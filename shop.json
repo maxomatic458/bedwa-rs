@@ -631,7 +631,24 @@
         }
       },
       [
-        
+        {
+          "offer": {
+            "item": "ender_pearl",
+            "count": 1,
+            "nbt": {
+              "display": {
+                "Lore": [
+                  "{\"text\":\"17 Gold\", \"italic\": \"false\", \"bold\": \"true\", \"color\": \"gold\"}'}}"
+                ]
+              }
+            }
+          },
+          "price": {
+            "item": "gold_ingot",
+            "count": 17,
+            "nbt": null
+          }
+        }
       ]
     ]
   }

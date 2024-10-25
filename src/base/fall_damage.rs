@@ -20,7 +20,7 @@ impl Plugin for FallDamagePlugin {
 
 #[derive(Component, Default)]
 pub struct FallingState {
-    fall_start_y: f64,
+    pub fall_start_y: f64,
     pub falling: bool,
 }
 

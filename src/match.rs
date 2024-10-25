@@ -142,9 +142,9 @@ fn start_match(
         inventory.clear();
         inventory.readonly = false;
 
-        // inventory.set_slot(36, ItemStack::new(ItemKind::Brick, 64, None));
-        // inventory.set_slot(37, ItemStack::new(ItemKind::IronIngot, 64, None));
-        // inventory.set_slot(38, ItemStack::new(ItemKind::GoldIngot, 64, None));
+        // inventory.set_slot(36, valence::ItemStack::new(ItemKind::Brick, 64, None));
+        // inventory.set_slot(37, valence::ItemStack::new(ItemKind::IronIngot, 64, None));
+        // inventory.set_slot(38, valence::ItemStack::new(ItemKind::GoldIngot, 64, None));
 
         let team_spawn = bedwars_config.spawns.get(&team.name).unwrap();
         pos.set(team_spawn.clone());
@@ -259,7 +259,7 @@ fn on_end_match(
         .count();
 
     // DEBUG
-    if teams_left > 1 {
+    if teams_left >= 1 {
         return;
     }
 

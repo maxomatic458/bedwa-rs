@@ -13,10 +13,10 @@ use bevy_time::{Time, TimePlugin};
 use colors::TeamColor;
 use commands::bedwars_admin::{handle_bedwars_admin_command, BedwarsAdminCommand};
 use edit::EditPlugin;
+use items::ender_pearl::EnderPearlPlugin;
 use lobby::{LobbyPlayerState, LobbyPlugin};
 use menu::ItemMenuPlugin;
 use r#match::MatchPlugin;
-use resource_spawners::ResourceSpawnerPlugin;
 // use resource_spawners::ResourceSpawnerPlugin;
 use shop::ShopPlugin;
 use spectator::SpectatorPlugin;
@@ -101,10 +101,11 @@ fn main() {
         .add_plugins(RegenerationPlugin)
         .add_plugins(BowPlugin)
         .add_plugins(PhysicsPlugin)
+        .add_plugins(EnderPearlPlugin)
         // .add_plugins(ItemEntityPlugin)
         .add_plugins(DespawnTimerPlugin)
         .add_plugins(ItemDropPlugin)
-        .add_plugins(ResourceSpawnerPlugin)
+        // .add_plugins(ResourceSpawnerPlugin)
         .add_plugins(CombatPlugin)
         .add_plugins(ArmorRightClickEquipPlugin)
         .add_plugins(ChestPlugin)
@@ -221,6 +222,5 @@ fn on_disconnect(
 }
 
 fn update_last_tick_time(time: Res<Time>, mut last_tick_time: ResMut<LastTickTime>) {
-    // tracing::debug!("Last tick time: {:?}", time.delta());
     last_tick_time.0 = time.delta();
 }

@@ -89,20 +89,20 @@ impl Plugin for CombatPlugin {
 
 #[derive(QueryData)]
 #[query_data(mutable)]
-struct CombatQuery {
-    client: &'static mut Client,
-    entity_id: &'static EntityId,
-    position: &'static Position,
-    velocity: &'static mut Velocity,
-    state: &'static mut CombatState,
-    statuses: &'static mut EntityStatuses,
-    inventory: &'static Inventory,
-    held_item: &'static HeldItem,
-    falling_state: &'static FallingState,
-    equipment: &'static Equipment,
-    team: &'static Team,
-    entity: Entity,
-    stuck_arrow_count: &'static mut StuckArrowCount,
+pub struct CombatQuery {
+    pub client: &'static mut Client,
+    pub entity_id: &'static EntityId,
+    pub position: &'static Position,
+    pub velocity: &'static mut Velocity,
+    pub state: &'static mut CombatState,
+    pub statuses: &'static mut EntityStatuses,
+    pub inventory: &'static Inventory,
+    pub held_item: &'static HeldItem,
+    pub falling_state: &'static FallingState,
+    pub equipment: &'static Equipment,
+    pub team: &'static Team,
+    pub entity: Entity,
+    pub stuck_arrow_count: &'static mut StuckArrowCount,
 }
 
 fn xy_knockback(damage_pos: DVec3, victim_pos: DVec3) -> (f32, f32) {

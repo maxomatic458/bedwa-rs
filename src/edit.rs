@@ -338,13 +338,13 @@ fn on_change_team_mode(
 }
 
 fn edit_click_block(
-    mut clients: Query<(&mut Client, &mut Inventory, &Look, &HeldItem, Option<&Team>)>,
+    mut clients: Query<(&mut Client, &Look, &HeldItem, Option<&Team>)>,
     mut events: EventReader<InteractBlockEvent>,
     mut layers: Query<&mut ChunkLayer>,
     mut wip_config: ResMut<WIPWorldConfig>,
 ) {
     for event in events.read() {
-        let Ok((client, mut inventory, look, held_item, team)) = clients.get_mut(event.client)
+        let Ok((client, look, held_item, team)) = clients.get_mut(event.client)
         else {
             continue;
         };
@@ -354,13 +354,6 @@ fn edit_click_block(
         }
 
         let layer = layers.single_mut();
-
-        // TODO: do a PR on valence main for this
-        // builder inventory is readonly
-        // change the bitfield to held_item.slot
-
-        let slot_id = held_item.slot();
-        inventory.changed |= 1 << slot_id;
 
         let config_vec_pos = crate::bedwars_config::ConfigVec3 {
             x: event.position.x,
