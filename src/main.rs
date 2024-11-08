@@ -78,7 +78,7 @@ fn main() {
 
     App::new()
         .insert_resource(ServerSettings {
-            tick_rate: NonZero::new(60).unwrap(),
+            tick_rate: NonZero::new(20).unwrap(),
             ..Default::default()
         })
         .add_plugins(StatesPlugin)
