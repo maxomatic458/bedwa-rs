@@ -293,8 +293,6 @@ fn arrow_hits(
 
         let burn_time = bow_used.0.burn_time();
 
-        tracing::info!("burn_time: {}", burn_time);
-
         if burn_time > 0.0 {
             commands
                 .entity(victim.entity)
@@ -333,8 +331,6 @@ fn apply_fire_damage(
                 commands.entity(entity).remove::<Burning>();
                 flags.set_on_fire(false);
             }
-
-            tracing::info!("damage");
 
             event_writer.send(PlayerHurtEvent {
                 attacker: burn.attacker,

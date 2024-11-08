@@ -186,7 +186,6 @@ fn on_team_select(
             display_name.0 = Some(format!("{}{}", team_color.text_color(), username).into());
 
             commands.entity(player_ent).remove::<ItemMenu>();
-            tracing::warn!("removing team selector for {}", username);
 
             client.set_action_bar(format!("{}{} team", team_color.text_color(), team));
 
@@ -194,14 +193,10 @@ fn on_team_select(
                 .entity(player_ent)
                 .insert(TeamActionBarTimer::default());
 
-            tracing::info!("Player {} selected team {}", username, team);
-
             lobby_state.players.insert(username.0.clone(), team.clone());
             if switched_from.is_none() {
                 lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
             }
-
-            tracing::warn!("players without team: {}", lobby_state.without_team);
 
             if lobby_state.without_team == 0 {
                 tracing::info!("setting state to match");
@@ -236,7 +231,6 @@ fn set_action_bar(mut players: Query<(&mut Client, &Team, &TeamActionBarTimer)>)
             continue;
         }
 
-        tracing::info!("Updating action bar for team {}", team.name);
 
         let team_color = team.color;
         client.set_action_bar(&format!("{} Team: {}", team_color.text_color(), team.name));

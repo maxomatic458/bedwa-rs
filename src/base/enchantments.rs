@@ -35,7 +35,6 @@ impl Enchantment {
 
 /// Calculates the extra damage given by the sharpness enchantment.
 pub fn sharpness_extra_dmg(level: u32) -> f32 {
-    tracing::error!("level: {}", level);
     if level == 0 {
         return 0.0;
     }

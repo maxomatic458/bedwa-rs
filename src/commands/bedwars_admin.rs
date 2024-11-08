@@ -96,7 +96,6 @@ pub fn handle_bedwars_admin_command(
     mut layer: Query<&mut ChunkLayer>,
 ) {
     for event in events.read() {
-        tracing::info!("Bedwars Admin Command");
         let caller = event.executor;
 
         let player_pos = *entities.get(caller).unwrap().1;

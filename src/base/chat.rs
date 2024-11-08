@@ -129,7 +129,7 @@ fn handle_match_end(mut clients: Query<ChatQuery>, mut events: EventReader<EndMa
         );
 
         for mut client in &mut clients {
-            tracing::info!("Sending chat message to {}", client.username.0);
+            tracing::debug!("Sending chat message to {}", client.username.0);
             client.client.send_chat_message(&msg);
             client.client.send_chat_message(&return_to_lobby_msg);
         }

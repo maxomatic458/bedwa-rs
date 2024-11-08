@@ -69,7 +69,7 @@ fn init_shops(
 
         entity_commands.insert(Shop);
 
-        tracing::info!("Initialized shop at {:?}", pos);
+        tracing::debug!("Initialized shop at {:?}", pos);
         if let Some(team) = team {
             let team_color = bedwars_config.teams.get(team.as_str()).unwrap();
             entity_commands.insert(Team {
