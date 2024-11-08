@@ -17,6 +17,7 @@ use items::ender_pearl::EnderPearlPlugin;
 use lobby::{LobbyPlayerState, LobbyPlugin};
 use menu::ItemMenuPlugin;
 use r#match::MatchPlugin;
+use resource_spawners::ResourceSpawnerPlugin;
 // use resource_spawners::ResourceSpawnerPlugin;
 use shop::ShopPlugin;
 use spectator::SpectatorPlugin;
@@ -105,7 +106,7 @@ fn main() {
         // .add_plugins(ItemEntityPlugin)
         .add_plugins(DespawnTimerPlugin)
         .add_plugins(ItemDropPlugin)
-        // .add_plugins(ResourceSpawnerPlugin)
+        .add_plugins(ResourceSpawnerPlugin)
         .add_plugins(CombatPlugin)
         .add_plugins(ArmorRightClickEquipPlugin)
         .add_plugins(ChestPlugin)

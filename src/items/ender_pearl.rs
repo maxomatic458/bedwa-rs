@@ -16,14 +16,12 @@ use crate::{
         death::PlayerHurtEvent,
         fall_damage::FallingState,
         physics::{
-            CollidesWithBlocks, EntityBlockCollisionEvent, Gravity,
-            PhysicsMarker, TerminalVelocity,
+            CollidesWithBlocks, EntityBlockCollisionEvent, Gravity, PhysicsMarker, TerminalVelocity,
         },
     },
     utils::{despawn_timer::DespawnTimer, inventory::InventoryExt},
     Spectator,
 };
-
 
 const ENDER_PEARL_INACCURACY: f64 = 1.0;
 const ENDER_PEARL_GRAVITY: f32 = 20.0;

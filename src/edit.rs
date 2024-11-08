@@ -344,8 +344,7 @@ fn edit_click_block(
     mut wip_config: ResMut<WIPWorldConfig>,
 ) {
     for event in events.read() {
-        let Ok((client, look, held_item, team)) = clients.get_mut(event.client)
-        else {
+        let Ok((client, look, held_item, team)) = clients.get_mut(event.client) else {
             continue;
         };
 

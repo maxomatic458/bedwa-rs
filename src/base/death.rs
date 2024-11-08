@@ -1,7 +1,9 @@
 use bevy_ecs::query::Added;
 use bevy_state::prelude::in_state;
 use bevy_time::{Time, Timer, TimerMode};
+use rand::Rng;
 use valence::client::UpdateClientsSet;
+use valence::entity::lightning::LightningEntityBundle;
 use valence::entity::EntityId;
 use valence::prelude::Inventory;
 use valence::protocol::packets::play::EntityDamageS2c;
@@ -45,6 +47,13 @@ pub struct PlayerDeathEvent {
 }
 
 #[derive(Debug, Clone, Event)]
+pub struct PlayerEliminatedEvent {
+    pub attacker: Option<Entity>, // <- player killed themselves
+    pub victim: Entity,
+    pub position: DVec3,
+}
+
+#[derive(Debug, Clone, Event)]
 pub struct PlayerHurtEvent {
     pub attacker: Option<Entity>, // <- player killed themselves
     pub victim: Entity,
@@ -62,10 +71,12 @@ impl Plugin for DeathPlugin {
                     .run_if(in_state(GameState::Match)),
                 on_death.run_if(in_state(GameState::Match)),
                 tick_respawn_timer,
+                on_player_elimination,
             ),
         )
         .add_event::<PlayerHurtEvent>()
         .add_event::<PlayerDeathEvent>()
+        .add_event::<PlayerEliminatedEvent>()
         .observe(player_respawn);
     }
 }
@@ -176,13 +187,15 @@ fn on_death(
 
 fn on_player_hurt(
     mut commands: Commands,
-    mut clients: Query<(&EntityId, &mut Health)>,
+    mut clients: Query<(&EntityId, &mut Health, &Team)>,
     mut events: EventReader<PlayerHurtEvent>,
-    mut event_writer: EventWriter<PlayerDeathEvent>,
+    mut death_event_writer: EventWriter<PlayerDeathEvent>,
+    mut eliminated_writer: EventWriter<PlayerEliminatedEvent>,
     mut layer: Query<&mut ChunkLayer>,
+    match_state: Res<MatchState>,
 ) {
     for event in events.read() {
-        let Ok((victim_id, mut victim_health)) = clients.get_mut(event.victim) else {
+        let Ok((victim_id, mut victim_health, team)) = clients.get_mut(event.victim) else {
             continue;
         };
 
@@ -193,11 +206,22 @@ fn on_player_hurt(
         let new_health = victim_health.0 - event.damage;
 
         if new_health <= 0.0 {
-            event_writer.send(PlayerDeathEvent {
-                attacker: event.attacker,
-                victim: event.victim,
-                position: event.position,
-            });
+            let bed_destroyed = match_state.teams.get(&team.name).unwrap().bed_destroyed;
+
+            if bed_destroyed {
+                eliminated_writer.send(PlayerEliminatedEvent {
+                    attacker: event.attacker,
+                    victim: event.victim,
+                    position: event.position,
+                });
+            } else {
+                death_event_writer.send(PlayerDeathEvent {
+                    attacker: event.attacker,
+                    victim: event.victim,
+                    position: event.position,
+                });
+            }
+
             layer.play_sound(
                 Sound::EntityPlayerDeath,
                 SoundCategory::Player,
@@ -205,6 +229,7 @@ fn on_player_hurt(
                 1.0,
                 1.0,
             );
+
             commands.entity(event.victim).insert(IsDead);
         } else {
             layer.play_sound(
@@ -217,9 +242,12 @@ fn on_player_hurt(
             victim_health.0 = new_health;
         }
 
-        let attacker_id = event
-            .attacker
-            .map(|attacker| clients.get(attacker).map(|(id, _)| *id).unwrap_or_default());
+        let attacker_id = event.attacker.map(|attacker| {
+            clients
+                .get(attacker)
+                .map(|(id, _, _)| *id)
+                .unwrap_or_default()
+        });
 
         layer
             .view_writer(event.position)
@@ -230,5 +258,33 @@ fn on_player_hurt(
                 source_direct_id: attacker_id.unwrap_or_default().get().into(),
                 source_pos: Some(event.position),
             });
+    }
+}
+
+fn on_player_elimination(
+    mut commands: Commands,
+    mut layer: Query<&mut ChunkLayer>,
+    mut events: EventReader<PlayerEliminatedEvent>,
+    clients: Query<&EntityLayerId>,
+) {
+    for event in events.read() {
+        let mut layer = layer.single_mut();
+        let Ok(layer_id) = clients.get(event.victim) else {
+            continue;
+        };
+
+        layer.play_sound(
+            Sound::EntityLightningBoltThunder,
+            SoundCategory::Master,
+            event.position,
+            10000.0,
+            rand::thread_rng().gen_range(0.8..=1.0),
+        );
+
+        commands.spawn(LightningEntityBundle {
+            position: Position(event.position),
+            layer: EntityLayerId(layer_id.0),
+            ..Default::default()
+        });
     }
 }

@@ -3,11 +3,14 @@ use bevy_state::prelude::in_state;
 use valence::prelude::*;
 
 use crate::{
-    r#match::{EndMatch, MatchState, POST_MATCH_TIME_SECS},
+    r#match::{EndMatch, POST_MATCH_TIME_SECS},
     GameState, Team,
 };
 
-use super::{break_blocks::BedDestroyedEvent, death::PlayerDeathEvent};
+use super::{
+    break_blocks::BedDestroyedEvent,
+    death::{PlayerDeathEvent, PlayerEliminatedEvent},
+};
 
 pub struct ChatPlugin;
 
@@ -31,63 +34,66 @@ struct ChatQuery {
 
 fn handle_death_message(
     mut chat_query: Query<ChatQuery>,
-    mut events: EventReader<PlayerDeathEvent>,
-
-    match_state: Res<MatchState>,
+    mut death_events: EventReader<PlayerDeathEvent>,
+    mut eliminated_events: EventReader<PlayerEliminatedEvent>,
 ) {
-    for event in events.read() {
+    for event in death_events.read() {
         let Ok(victim) = chat_query.get(event.victim) else {
             continue;
         };
-        let victim_eliminated = match_state
-            .teams
-            .get(&victim.team.name)
-            .unwrap()
-            .bed_destroyed;
-        if let Some(attacker) = event.attacker {
+
+        let msg = if let Some(attacker) = event.attacker {
             let Ok(attacker) = chat_query.get(attacker) else {
                 continue;
             };
 
-            let msg = if victim_eliminated {
-                format!(
-                    "{}§n{}§r §awas eliminated by {}{}",
-                    victim.team.color.text_color(),
-                    victim.username,
-                    attacker.team.color.text_color(),
-                    attacker.username
-                )
-            } else {
-                format!(
-                    "{}§n{}§r §awas killed by {}{}",
-                    victim.team.color.text_color(),
-                    victim.username,
-                    attacker.team.color.text_color(),
-                    attacker.username
-                )
-            };
-
-            for mut client in &mut chat_query {
-                client.client.send_chat_message(&msg);
-            }
+            format!(
+                "{}§n{}§r §awas killed by {}{}",
+                victim.team.color.text_color(),
+                victim.username,
+                attacker.team.color.text_color(),
+                attacker.username
+            )
         } else {
-            let msg = if victim_eliminated {
-                format!(
-                    "{}§n{}§r §awas eliminated",
-                    victim.team.color.text_color(),
-                    victim.username
-                )
-            } else {
-                format!(
-                    "{}§n{}§r §adied",
-                    victim.team.color.text_color(),
-                    victim.username
-                )
+            format!(
+                "{}§n{}§r §adied",
+                victim.team.color.text_color(),
+                victim.username
+            )
+        };
+
+        for mut client in &mut chat_query {
+            client.client.send_chat_message(&msg);
+        }
+    }
+
+    for event in eliminated_events.read() {
+        let Ok(victim) = chat_query.get(event.victim) else {
+            continue;
+        };
+
+        let msg = if let Some(attacker) = event.attacker {
+            let Ok(attacker) = chat_query.get(attacker) else {
+                continue;
             };
 
-            for mut client in &mut chat_query {
-                client.client.send_chat_message(&msg);
-            }
+            format!(
+                "{}§n{}§r §awas eliminated by {}{}",
+                victim.team.color.text_color(),
+                victim.username,
+                attacker.team.color.text_color(),
+                attacker.username
+            )
+        } else {
+            format!(
+                "{}§n{}§r §aeliminated",
+                victim.team.color.text_color(),
+                victim.username
+            )
+        };
+
+        for mut client in &mut chat_query {
+            client.client.send_chat_message(&msg);
         }
     }
 }

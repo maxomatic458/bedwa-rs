@@ -35,13 +35,13 @@ impl Plugin for ResourceSpawnerPlugin {
 }
 
 #[derive(Debug, Bundle)]
-struct ResourceSpawnerBundle {
+pub struct ResourceSpawnerBundle {
     marker: ResourceSpawner,
     position: Position,
 }
 
 #[derive(Debug, Component)]
-struct ResourceSpawner {
+pub struct ResourceSpawner {
     item: ItemStack,
     timer: Timer,
 }

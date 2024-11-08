@@ -32,12 +32,13 @@ use crate::{
         build::PlayerPlacedBlocks,
         chests::ChestState,
         combat::{Burning, CombatState},
-        death::{IsDead, PlayerDeathEvent},
+        death::{IsDead, PlayerDeathEvent, PlayerEliminatedEvent},
         fall_damage::FallingState,
         physics::CollidableForEntities,
         scoreboard::BedwarsScoreboard,
     },
     bedwars_config::WorldConfig,
+    resource_spawners::ResourceSpawner,
     utils::inventory::InventoryExt,
     GameState, LobbyPlayer, Spectator, Team,
 };
@@ -100,7 +101,8 @@ impl Plugin for MatchPlugin {
         app.add_systems(OnEnter(GameState::Match), (start_match,))
             .add_systems(
                 Update,
-                (on_bed_destroy, on_player_death).run_if(in_state(GameState::Match)),
+                (on_bed_destroy, on_player_death, on_player_elimination)
+                    .run_if(in_state(GameState::Match)),
             )
             .add_event::<EndMatch>()
             .add_systems(Update, (on_end_match,).run_if(in_state(GameState::Match)))
@@ -210,16 +212,38 @@ fn on_player_death(
     mut match_state: ResMut<MatchState>,
 ) {
     for event in events.read() {
+        let Ok((victim_name, _victim_team)) = players.get(event.victim) else {
+            continue;
+        };
+
+        let victim_stats = match_state.player_stats.get_mut(&victim_name.0).unwrap();
+        victim_stats.deaths += 1;
+
+        if let Some(attacker) = event.attacker {
+            let Ok((attacker_name, _)) = players.get(attacker) else {
+                continue;
+            };
+
+            let attacker_stats = match_state.player_stats.get_mut(&attacker_name.0).unwrap();
+            attacker_stats.kills += 1;
+        }
+    }
+}
+
+fn on_player_elimination(
+    mut events: EventReader<PlayerEliminatedEvent>,
+    players: Query<(&Username, &Team)>,
+    mut match_state: ResMut<MatchState>,
+) {
+    for event in events.read() {
         let Ok((victim_name, victim_team)) = players.get(event.victim) else {
             continue;
         };
 
         let victim_team_state = match_state.teams.get_mut(&victim_team.name).unwrap();
-        if victim_team_state.bed_destroyed {
-            victim_team_state
-                .players_alive
-                .retain(|p| p != &victim_name.0);
-        }
+        victim_team_state
+            .players_alive
+            .retain(|p| p != &victim_name.0);
 
         let victim_stats = match_state.player_stats.get_mut(&victim_name.0).unwrap();
         victim_stats.deaths += 1;
@@ -259,7 +283,7 @@ fn on_end_match(
         .count();
 
     // DEBUG
-    if teams_left >= 1 {
+    if teams_left > 1 {
         return;
     }
 
@@ -309,6 +333,7 @@ fn tick_postmatch_timer(
     time: Res<Time>,
     bedwars_config: Res<WorldConfig>,
     mut chest_state: ResMut<ChestState>,
+    resource_spawners: Query<(Entity, &ResourceSpawner)>,
 ) {
     timer.0.tick(time.delta());
 
@@ -353,6 +378,11 @@ fn tick_postmatch_timer(
             let block_pos = BlockPos::new(pos.x, pos.y, pos.z);
             layer.set_block(block_pos, Block::from(block.clone()));
         }
+    }
+
+    // Remove resource spawners
+    for (ent, _) in &mut resource_spawners.iter() {
+        commands.entity(ent).insert(Despawned);
     }
 
     state.set(GameState::Lobby);
