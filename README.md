@@ -25,7 +25,7 @@ When you run the server for the first time, you will be placed in an edit mode.
 Now you can use the items in your hotbar and the chat commands to configure the server.
 
 ## Chat commands
-* `/bwa arenabounds <pos1> >pos2>`: Set the arena bounds.
+* `/bwa arenabounds <pos1> <pos2>`: Set the arena bounds.
 
 * `/bwa team add <team_name> <team_color>`: Add a team.
 
