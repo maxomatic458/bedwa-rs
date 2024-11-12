@@ -18,8 +18,10 @@ impl Plugin for ChatPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(
             Update,
-            (handle_death_message, handle_bed_destroyed, handle_match_end)
-                .run_if(in_state(GameState::Match)),
+            (
+                (handle_death_message, handle_bed_destroyed).run_if(in_state(GameState::Match)),
+                handle_match_end,
+            ),
         );
     }
 }

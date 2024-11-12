@@ -1,11 +1,21 @@
 use std::num::NonZero;
 
 use base::{
-    armor_right_click_equip::ArmorRightClickEquipPlugin, bow::BowPlugin,
-    break_blocks::BlockBreakPlugin, build::BuildPlugin, chat::ChatPlugin, chests::ChestPlugin,
-    combat::CombatPlugin, death::DeathPlugin, drop_items::ItemDropPlugin,
-    fall_damage::FallDamagePlugin, item_pickup::ItemPickupPlugin, physics::PhysicsPlugin,
-    regeneration::RegenerationPlugin, scoreboard::ScoreboardPlugin, utils::debug::DebugPlugin,
+    armor_right_click_equip::ArmorRightClickEquipPlugin,
+    bow::BowPlugin,
+    break_blocks::BlockBreakPlugin,
+    build::BuildPlugin,
+    chat::ChatPlugin,
+    chests::ChestPlugin,
+    combat::CombatPlugin,
+    death::{DeathPlugin, PlayerEliminatedEvent},
+    drop_items::ItemDropPlugin,
+    fall_damage::FallDamagePlugin,
+    item_pickup::ItemPickupPlugin,
+    physics::PhysicsPlugin,
+    regeneration::RegenerationPlugin,
+    scoreboard::ScoreboardPlugin,
+    utils::debug::DebugPlugin,
     void_death::VoidDeathPlugin,
 };
 use bevy_state::{app::StatesPlugin, prelude::*};
@@ -202,23 +212,34 @@ fn init_clients(
 
 fn on_disconnect(
     trigger: Trigger<OnRemove, Client>,
-    query: Query<&Username>,
+    query: Query<(&Username, &Position)>,
     // commands: Commands,
     game_state: Res<State<GameState>>,
     mut lobby_state: Option<ResMut<LobbyPlayerState>>,
-    // match_state: Option<ResMut<MatchState>>,
+    // eliminate a player that disconnects during a match
+    mut elimination_writer: EventWriter<PlayerEliminatedEvent>,
 ) {
-    let Ok(username) = query.get(trigger.entity()) else {
+    let Ok((username, position)) = query.get(trigger.entity()) else {
         return;
     };
 
     tracing::info!("Player {} disconnected", username);
 
-    if game_state.get() == &GameState::Lobby {
-        if let Some(lobby_state) = lobby_state.as_mut() {
-            lobby_state.players.remove(&username.0);
-            lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
+    match game_state.get() {
+        GameState::Lobby => {
+            if let Some(lobby_state) = lobby_state.as_mut() {
+                lobby_state.players.remove(&username.0);
+                lobby_state.without_team = lobby_state.without_team.saturating_sub(1);
+            }
         }
+        GameState::Match => {
+            elimination_writer.send(PlayerEliminatedEvent {
+                attacker: None,
+                victim: trigger.entity(),
+                position: position.0,
+            });
+        }
+        _ => {}
     }
 }
 
