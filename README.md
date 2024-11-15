@@ -1,3 +1,7 @@
+> [!NOTE]
+> Parts of the server logic will be seperated into [this](https://github.com/maxomatic458/valence-extra) repository (to make them more reusable).
+> So a rewrite will probably happen before larger features can be added.  
+
 # Bedwa-rs
 A minecraft bedwars server written entirely in rust with [valence](https://github.com/valence-rs/valence)
 
